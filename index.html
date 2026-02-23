@@ -9,8 +9,8 @@
         body {
             margin: 0;
             padding: 0;
-            background-color: #1a1a1a;
-            color: #e0e0e0;
+            background-color: #f7f9fc;
+            color: #333;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
@@ -38,16 +38,18 @@
         ul.sketch-list a {
             display: block;
             padding: 15px 20px;
-            background-color: #2a2a2a;
-            color: #00ccff;
+            background-color: #ffffff;
+            color: #0077ff;
             text-decoration: none;
             border-radius: 8px;
-            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
         }
 
         ul.sketch-list a:hover {
-            background-color: #333;
+            background-color: #f0f4ff;
             transform: translateX(5px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.1);
         }
 
         .new-button {
@@ -64,6 +66,15 @@
         .new-button:hover {
             background-color: #45a049;
         }
+
+        .hint-box {
+            margin-top: 40px;
+            padding: 20px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
     </style>
 </head>
 
@@ -78,8 +89,8 @@
             <!-- 新しいスケッチはここに追加されます -->
         </ul>
 
-        <div style="margin-top: 40px; padding: 20px; background: #222; border-radius: 8px;">
-            <h3>⚡ 新しいネタを思いついたら...</h3>
+        <div class="hint-box">
+            <h3 style="margin-top:0;">⚡ 新しいネタを思いついたら...</h3>
             <p>ターミナルで以下のコマンドを実行するだけで準備完了します:</p>
             <code>npm run new 002-my-idea</code>
         </div>
