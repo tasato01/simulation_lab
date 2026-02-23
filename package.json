@@ -1,0 +1,21 @@
+{
+  "name": "simulation_lab",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "new": "node scripts/new.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "p5": "^2.2.2",
+    "tweakpane": "^4.0.5"
+  },
+  "devDependencies": {
+    "vite": "^7.3.1"
+  }
+}

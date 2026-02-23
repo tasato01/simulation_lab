@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulation Lab</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            color: #ff0055;
+            font-weight: 300;
+            margin-bottom: 30px;
+        }
+
+        ul.sketch-list {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        ul.sketch-list li {
+            margin-bottom: 10px;
+        }
+
+        ul.sketch-list a {
+            display: block;
+            padding: 15px 20px;
+            background-color: #2a2a2a;
+            color: #00ccff;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        ul.sketch-list a:hover {
+            background-color: #333;
+            transform: translateX(5px);
+        }
+
+        .new-button {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .new-button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Simulation Lab</h1>
+        <p>思いついたアイデアをすぐに形にするための物理シミュレーション環境です。</p>
+
+        <h2>Sketches</h2>
+        <ul class="sketch-list" id="sketches">
+            <li><a href="./sketches/001-gravity/">001-gravity</a></li>
+            <!-- 新しいスケッチはここに追加されます -->
+        </ul>
+
+        <div style="margin-top: 40px; padding: 20px; background: #222; border-radius: 8px;">
+            <h3>⚡ 新しいネタを思いついたら...</h3>
+            <p>ターミナルで以下のコマンドを実行するだけで準備完了します:</p>
+            <code>npm run new 002-my-idea</code>
+        </div>
+    </div>
+</body>
+
+</html>
