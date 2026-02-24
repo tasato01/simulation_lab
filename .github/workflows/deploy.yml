@@ -31,28 +31,15 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
-
-      - name: Debug Info
         run: |
-          node -v
-          npm -v
-          ls -la node_modules/.bin || true
+          npm install
 
       - name: Build
-        run: |
-          npm run build > build_log.txt 2>&1 || {
-            git config --global user.name 'github-actions[bot]'
-            git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-            git add build_log.txt
-            git commit -m "Auto-commit build failure log"
-            git push
-            exit 1
-          }
+        run: npm run build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
