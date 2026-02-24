@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "new": "node scripts/new.js"
+    "new": "node scripts/new.js",
+    "deploy": "git add . && git commit -m \"Auto-deploy update\" && git push origin main"
   },
   "keywords": [],
   "author": "",

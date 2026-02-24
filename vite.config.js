@@ -18,6 +18,12 @@ sketchFolders.forEach((folder) => {
     }
 });
 
+// テンプレート（basic-p5）もHUBからのリンク用にビルド対象に含める
+const templatePath = resolve(__dirname, 'templates/basic-p5/index.html');
+if (fs.existsSync(templatePath)) {
+    input['basic-p5'] = templatePath;
+}
+
 export default defineConfig({
     // GitHub Pagesで公開するためのベースパス設定
     // リポジトリ名に合わせて自動設定されます（例: https://username.github.io/repo-name/）

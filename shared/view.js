@@ -84,6 +84,9 @@ export class Camera {
 export function drawGrid(p, camera, theme = 'light') {
     p.push();
 
+    // サムネイル表示モードかどうかを判定
+    const isThumb = new URLSearchParams(window.location.search).get('thumb') === '1';
+
     const currentViewRange = camera.baseViewRange / camera.zoom;
 
     // 画面の短い方の次元を基準に、画面内に描画したい理想的な主グリッド数(例：約10個)から
@@ -137,6 +140,7 @@ export function drawGrid(p, camera, theme = 'light') {
 
     // 数値の描画を行うヘルパー関数（Y軸が反転しているのでテキストが逆さまにならないようにする）
     const drawText = (str, x, y, alignX, alignY) => {
+        if (isThumb) return; // サムネイル時はテキスト非表示
         p.push();
         p.translate(x, y);
         p.scale(1, -1); // テキストだけY軸を再反転
