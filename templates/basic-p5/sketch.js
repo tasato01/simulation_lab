@@ -20,17 +20,62 @@ const PARAMS = {
     color: '#ff0055'
 };
 
+// ==========================================
+// 1. 状態変数の定義 (物体の位置や速度などを追加する場所)
+// ==========================================
+// 例: 円の座標や速度
+let circleX = 0;
+let circleY = 20;
+
+// ==========================================
+// 2. 初期化処理 (画面サイズや初期設定などを記述する場所)
+// ==========================================
+function setupSimulation(p) {
+    // 画面初期化時やリセット時に呼ばれます
+    circleX = 0;
+    circleY = 20;
+}
+
+// ==========================================
+// 3. 状態の更新処理 (毎フレームの物理計算などを記述する場所)
+// ==========================================
+// 引数 time はシミュレーションの経過時間、deltaTime は前フレームからの経過時間
+function updateSimulation(p, time, deltaTime) {
+    // 例: 時間に応じて高さを変える
+    circleY = Math.sin(time) * 20;
+}
+
+// ==========================================
+// 4. 描画処理 (円や線を描画する場所)
+// ==========================================
+function drawSimulation(p) {
+    // 例1: 原点(0,0)から円の座標に向けてばねを描画する
+    const isDark = PARAMS.theme === 'dark';
+    const springColor = isDark ? '#aaaaaa' : '#888888';
+
+    // shared/view.jsで自作した関数を呼び出す
+    drawSpring(p, 0, 0, circleX, circleY, 15, 2, springColor, 2);
+
+    // （単なる線を引く場合は以下のようにします↓）
+    // drawLine(p, 0, 0, circleX, circleY, springColor, 2);
+
+    // 例2: オブジェクト(円)を描画
+    p.fill(PARAMS.color);
+    p.noStroke();
+    p.circle(circleX, circleY, PARAMS.radius * 2);
+}
+
+
+/**
+ * ==========================================
+ * ここから下は基本システム（UIやカメラの設定）です。
+ * 特殊な変更を行いたい場合以外は、編集不要です。
+ * ==========================================
+ */
 const sketch = (p) => {
     let pane;
     let camera; // カメラインスタンス
     let isPaused = false; // シミュレーションの一時停止状態
-
-    // ==========================================
-    // 1. 状態変数の定義 (物体の位置や速度などを追加する場所)
-    // ==========================================
-    // 例: 円の座標や速度
-    let circleX = 0;
-    let circleY = 20;
 
     // リアルタイム表示用の監視オブジェクト 
     const MONITOR = {
@@ -40,11 +85,11 @@ const sketch = (p) => {
     p.setup = () => {
         p.createCanvas(p.windowWidth, p.windowHeight);
 
-        // ==========================================
-        // 2. 初期化処理 (画面サイズや初期設定などを記述する場所)
-        // ==========================================
         // 初期表示範囲を6としてカメラを生成
         camera = new Camera(p, 6);
+
+        // ユーザーの初期化処理を呼ぶ
+        setupSimulation(p);
 
         // サムネイル表示の場合はUIパネルを生成しない
         if (!isThumb) {
@@ -66,8 +111,8 @@ const sketch = (p) => {
             });
 
             pane.addButton({ title: '🔄 リセット (Reset)' }).on('click', () => {
-                // 必要に応じて初期化処理をここに記述
                 MONITOR.time = 0;
+                setupSimulation(p); // リセット時にもう一度初期化処理を呼ぶ
             });
 
             // --- リアルタイムモニター ---
@@ -108,9 +153,7 @@ const sketch = (p) => {
                 // サムネイル表示用のクエリがあれば取り除く
                 shareUrl = shareUrl.replace('?thumb=1', '');
 
-                // ローカルホストからコピーする際もGitHub PagesのURLへ変換
                 if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                    // /sketches/002-test/ 等につながるパスを取得して本番URLに付与
                     shareUrl = `https://tasato01.github.io/simulation_lab${window.location.pathname}`;
                 }
 
@@ -136,31 +179,15 @@ const sketch = (p) => {
         // DESMOS風の動的グリッドを描画
         drawGrid(p, camera, PARAMS.theme);
 
-        // ==========================================
-        // 3. 状態の更新処理 (毎フレームの物理計算などを記述する場所)
-        // ==========================================
+        // --- 物理演算の更新 ---
         if (!isPaused && !isThumb) {
             MONITOR.time += p.deltaTime / 1000;
-            // 例: 時間に応じて高さを変える
-            circleY = Math.sin(MONITOR.time) * 20;
+            // ユーザーが定義した更新処理を呼び出す
+            updateSimulation(p, MONITOR.time, p.deltaTime / 1000);
         }
 
-        // ==========================================
-        // 4. 描画処理 (円や線を描画する場所)
-        // ==========================================
-        // 例1: 原点(0,0)から円の座標に向けてばねを描画する
-        const isDark = PARAMS.theme === 'dark';
-        const springColor = isDark ? '#aaaaaa' : '#888888';
-        // shared/view.jsで自作した関数を呼び出す
-        drawSpring(p, 0, 0, circleX, circleY, 15, 2, springColor, 2);
-
-        // （単なる線を引く場合は以下のようにします↓）
-        // drawLine(p, 0, 0, circleX, circleY, springColor, 2);
-
-        // 例2: オブジェクト(円)を描画
-        p.fill(PARAMS.color);
-        p.noStroke();
-        p.circle(circleX, circleY, PARAMS.radius * 2);
+        // --- 描画処理 ---
+        drawSimulation(p);
 
         // サムネイル時は1フレームだけ描画してループを停止することで負荷を軽減
         if (isThumb) {
