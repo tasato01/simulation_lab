@@ -44,5 +44,5 @@ if (fs.existsSync(rootIndexPath)) {
 }
 
 console.log(`\n✨ Sketch "${sketchName}" created successfully!`);
-console.log(`\nTo start development, run:`);
-console.log(`  npm run dev\n`);
+console.log(`\n💡 Tip: You can run this command in a **NEW terminal window** without stopping your 'npm run dev' server.`);
+console.log(`Vite will automatically detect the new HTML files and links!\n`);

@@ -62,8 +62,9 @@ const sketch = (p) => {
 
         // --- リアルタイムモニター ---
         const monitorFolder = pane.addFolder({ title: '📊 リアルタイム変数', expanded: true });
-        monitorFolder.addBinding(MONITOR, 'y', { readonly: true, label: '高さ (y)', format: (v) => v.toFixed(2) });
-        monitorFolder.addBinding(MONITOR, 'vy', { readonly: true, label: '速度 (vy)', format: (v) => v.toFixed(2) });
+        // interval: 16 にすることで、約60FPSで滑らかに数値が更新されます
+        monitorFolder.addBinding(MONITOR, 'y', { readonly: true, label: '高さ (y)', format: (v) => v.toFixed(2), interval: 16 });
+        monitorFolder.addBinding(MONITOR, 'vy', { readonly: true, label: '速度 (vy)', format: (v) => v.toFixed(2), interval: 16 });
 
         // --- 設定フォルダ ---
         const settingsFolder = pane.addFolder({ title: '⚙️ 設定 (Settings)', expanded: false });

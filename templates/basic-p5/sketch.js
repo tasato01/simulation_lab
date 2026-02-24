@@ -56,7 +56,8 @@ const sketch = (p) => {
 
         // --- リアルタイムモニター ---
         const monitorFolder = pane.addFolder({ title: '📊 リアルタイム変数', expanded: true });
-        monitorFolder.addBinding(MONITOR, 'time', { readonly: true, label: '時間(t)' });
+        // interval: 16 にすることで、約60FPSで滑らかに数値が更新されます
+        monitorFolder.addBinding(MONITOR, 'time', { readonly: true, label: '時間(t)', interval: 16 });
 
         // --- 設定フォルダ ---
         const settingsFolder = pane.addFolder({ title: '⚙️ 設定 (Settings)', expanded: false });
