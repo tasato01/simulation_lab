@@ -28,8 +28,11 @@ const sketch = (p) => {
 
         pane = new Pane({ title: 'パラメータ調整' });
 
-        // テーマ切り替え
-        pane.addBinding(PARAMS, 'theme', {
+        // 設定ボタン（フォルダ）の追加
+        const settingsFolder = pane.addFolder({ title: '設定' });
+
+        // テーマ切り替えを設定フォルダ内に配置
+        settingsFolder.addBinding(PARAMS, 'theme', {
             options: { Light: 'light', Dark: 'dark' },
             label: 'テーマ'
         }).on('change', (ev) => {
@@ -46,13 +49,6 @@ const sketch = (p) => {
         pane.addBinding(PARAMS, 'radius', { min: 1, max: 50, label: '半径' });
         pane.addBinding(PARAMS, 'gravity', { min: 0, max: 20, label: '重力' });
         pane.addBinding(PARAMS, 'color', { label: '色' });
-
-        // カメラのリセットボタン
-        pane.addButton({ title: '視点リセット (Reset View)' }).on('click', () => {
-            camera.x = 0;
-            camera.y = 0;
-            camera.zoom = 1.0;
-        });
     };
 
     p.draw = () => {
@@ -63,12 +59,11 @@ const sketch = (p) => {
             p.background(247, 249, 252);
         }
 
-        // --- カメラ（パン・ズーム・WASD）の更新と適用 ---
-        camera.update(); // WASDキー操作を反映
-        camera.apply();  // 座標系とスケールを適用
+        // --- カメラ（パン・ズーム）のスケールと移動を適用 ---
+        camera.apply();
 
-        // XY軸とグリッドを描画（10区切り）テーマを渡す
-        drawGrid(p, camera, 10, PARAMS.theme);
+        // DESMOS風の動的グリッドを描画
+        drawGrid(p, camera, PARAMS.theme);
 
         // オブジェクトの描画
         p.fill(PARAMS.color);

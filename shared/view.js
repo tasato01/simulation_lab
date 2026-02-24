@@ -18,17 +18,11 @@ export class Camera {
         this.x = 0; // カメラの中心X座標（ワールド座標）
         this.y = 0; // カメラの中心Y座標（ワールド座標）
         this.zoom = 1.0; // ズーム倍率
-        this.isDragging = false;
-
-        // マウスドラッグとホイールのイベントをフックする
-        // p5.jsのデフォルトの関数を上書きしないよう、イベントリスナーを使用するのが安全ですが、
-        // ここでは使い勝手のため、p5のメソッドに相乗りする形で実装します。
-        // （完全な上書きを避けるため、スケッチ側で p.mouseDragged 等が定義されていれば後で呼ばれます）
 
         const originalMouseDragged = p.mouseDragged;
         p.mouseDragged = (event) => {
-            // Tweakpaneの操作中はカメラを動かさない (UIの幅を約300pxと想定し左側をガード)
-            if (p.mouseX < 300 && p.mouseY < 500) {
+            // Tweakpaneの操作中はカメラを動かさない (UIの幅を約320pxと想定し左側をガード)
+            if (p.mouseX < 320 && p.mouseY < 600) {
                 if (originalMouseDragged) originalMouseDragged(event);
                 return;
             }
@@ -46,31 +40,15 @@ export class Camera {
 
         const originalMouseWheel = p.mouseWheel;
         p.mouseWheel = (event) => {
-            // ズームイン・アウト (ホイール回転量に応じて)
-            const zoomAmount = event.delta * 0.001;
-            this.zoom -= zoomAmount;
+            // ズームイン・アウト (ホイール回転量に応じて、速度を半減)
+            const zoomAmount = event.delta * 0.0005; // 0.001 -> 0.0005へ半減
+            const newZoom = this.zoom - zoomAmount;
             // ズームの限界を設定
-            this.zoom = this.p.constrain(this.zoom, 0.1, 10.0);
+            this.zoom = this.p.constrain(newZoom, 0.01, 100.0);
 
             if (originalMouseWheel) originalMouseWheel(event);
             return false; // スクロールイベントをブラウザで発生させない
         };
-    }
-
-    /**
-     * WASDキーによるパン操作を更新します。
-     * （p.draw内で毎フレーム呼び出してください）
-     */
-    update() {
-        const p = this.p;
-        // ズームに応じた移動スピード
-        const speed = (this.baseViewRange / this.zoom) * 0.01;
-
-        // WASDキー操作 (87=W, 83=S, 65=A, 68=D)
-        if (p.keyIsDown(87)) this.y += speed;
-        if (p.keyIsDown(83)) this.y -= speed;
-        if (p.keyIsDown(65)) this.x -= speed;
-        if (p.keyIsDown(68)) this.x += speed;
     }
 
     /**
@@ -94,17 +72,31 @@ export class Camera {
 }
 
 /**
- * 現在のビュー範囲に合わせてグリッドとXY軸、座標の数値を描画します。
+ * 現在のビュー範囲に合わせてグリッドとXY軸、座標の数値をDESMOS風に描画します。
  * 
  * @param {import('p5')} p - p5.jsのインスタンス
  * @param {Camera} camera - 使用中のCameraインスタンス
- * @param {number} step - グリッドの1マスのサイズ（デフォルトは10）
  * @param {string} theme - 'light' または 'dark'
  */
-export function drawGrid(p, camera, step = 10, theme = 'light') {
+export function drawGrid(p, camera, theme = 'light') {
     p.push();
 
     const currentViewRange = camera.baseViewRange / camera.zoom;
+
+    // 画面の短い方の次元を基準に、画面内に描画したい理想的な主グリッド数(例：約10個)から
+    // ズーム具合に応じた適切な粗さのstep(目盛り幅)を動的に計算します。
+    const idealCellCount = 8;
+    const rawStep = (currentViewRange * 2) / idealCellCount;
+    const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
+    const residual = rawStep / magnitude;
+
+    let step = magnitude;
+    if (residual > 5) {
+        step = 5 * magnitude;
+    } else if (residual > 2) {
+        step = 2 * magnitude;
+    }
+
     // 画面全体をカバーできるように、縦横比を考慮して最大描画範囲を計算
     const maxRangeX = currentViewRange * (p.width / Math.min(p.width, p.height));
     const maxRangeY = currentViewRange * (p.height / Math.min(p.width, p.height));
@@ -114,8 +106,9 @@ export function drawGrid(p, camera, step = 10, theme = 'light') {
 
     // テーマ色
     const isDark = theme === 'dark';
-    const axisColor = isDark ? p.color(150, 150, 150, 200) : p.color(100, 100, 100, 150);
-    const gridColor = isDark ? p.color(60, 60, 60, 150) : p.color(220, 220, 220, 150);
+    const axisColor = isDark ? p.color(150, 150, 150, 200) : p.color(100, 100, 100, 180);
+    const gridColor = isDark ? p.color(60, 60, 60, 120) : p.color(220, 220, 220, 150);
+    const minorGridColor = isDark ? p.color(40, 40, 40, 80) : p.color(240, 240, 240, 100);
     const textColor = isDark ? p.color(200, 200, 200) : p.color(50, 50, 50);
 
     // 描画開始位置・終了位置
@@ -125,19 +118,47 @@ export function drawGrid(p, camera, step = 10, theme = 'light') {
     const endY = Math.ceil((camera.y + maxRangeY) / step) * step;
 
     // テキストの描画設定
-    p.textSize(12 * weightScale);
+    p.textSize(14 * weightScale);
     p.textAlign(p.CENTER, p.CENTER);
 
+    // 文字が軸から視覚的に常にピクセル単位で同じ距離にあるようにオフセットを計算
+    const textOffset = 15 * weightScale;
+
+    // 数字フォーマット（小数点以下の桁数制御）
+    const formatNumber = (num) => {
+        // 浮動小数点誤差を丸める
+        const rounded = Math.round(num * 10000) / 10000;
+        return rounded.toString();
+    };
+
     // 数値の描画を行うヘルパー関数（Y軸が反転しているのでテキストが逆さまにならないようにする）
-    const drawText = (str, x, y) => {
+    const drawText = (str, x, y, alignX, alignY) => {
         p.push();
         p.translate(x, y);
         p.scale(1, -1); // テキストだけY軸を再反転
+        p.textAlign(alignX, alignY);
         p.fill(textColor);
         p.noStroke();
         p.text(str, 0, 0);
         p.pop();
     };
+
+    // ----- 副グリッド（1段階細かい）の描画 -----
+    const minorStep = step / 5;
+    p.stroke(minorGridColor);
+    p.strokeWeight(1 * weightScale);
+    const minorStartX = Math.floor((camera.x - maxRangeX) / minorStep) * minorStep;
+    const minorEndX = Math.ceil((camera.x + maxRangeX) / minorStep) * minorStep;
+    for (let x = minorStartX; x <= minorEndX; x += minorStep) {
+        if (Math.abs(x) > 0.001 && Math.abs(x % step) > 0.001) p.line(x, camera.y - maxRangeY, x, camera.y + maxRangeY);
+    }
+    const minorStartY = Math.floor((camera.y - maxRangeY) / minorStep) * minorStep;
+    const minorEndY = Math.ceil((camera.y + maxRangeY) / minorStep) * minorStep;
+    for (let y = minorStartY; y <= minorEndY; y += minorStep) {
+        if (Math.abs(y) > 0.001 && Math.abs(y % step) > 0.001) p.line(camera.x - maxRangeX, y, camera.x + maxRangeX, y);
+    }
+
+    // ----- 主グリッドと軸・テキストの描画 -----
 
     // 縦線（X座標）
     for (let x = startX; x <= endX; x += step) {
@@ -151,10 +172,16 @@ export function drawGrid(p, camera, step = 10, theme = 'light') {
         // 線を描く
         p.line(x, camera.y - maxRangeY, x, camera.y + maxRangeY);
 
-        // 主要な座標の数字を描く (原点付近を避けるためにY軸付近に描画)
-        // ただしX=0の場合は描かない
+        // X軸の数値を描画（X座標が0でない場合）
+        // Y=0 の軸のすぐ下に描画するか、Y=0が画面外なら画面の下端・上端に描画
         if (Math.abs(x) >= 0.001) {
-            drawText(x.toString(), x, -step * 0.5);
+            let yPos = 0 - textOffset;
+            // もしY=0軸が画面より下なら画面下部に張り付ける
+            if (camera.y - maxRangeY > 0) yPos = camera.y - maxRangeY + textOffset * 1.5;
+            // もしY=0軸が画面より上なら画面上部に張り付ける
+            if (camera.y + maxRangeY < 0) yPos = camera.y + maxRangeY - textOffset * 1.5;
+
+            drawText(formatNumber(x), x, yPos, p.CENTER, p.TOP);
         }
     }
 
@@ -170,14 +197,22 @@ export function drawGrid(p, camera, step = 10, theme = 'light') {
         // 線を描く
         p.line(camera.x - maxRangeX, y, camera.x + maxRangeX, y);
 
-        // 主要な座標の数字を描く
+        // Y軸の数値を描画（Y座標が0でない場合）
         if (Math.abs(y) >= 0.001) {
-            drawText(y.toString(), step * 0.5, y);
+            let xPos = 0 - textOffset; // 文字を軸の左側に配置
+            if (camera.x - maxRangeX > 0) xPos = camera.x - maxRangeX + textOffset * 1.5;
+            if (camera.x + maxRangeX < 0) xPos = camera.x + maxRangeX - textOffset * 1.5;
+
+            drawText(formatNumber(y), xPos, y, p.RIGHT, p.CENTER);
         }
     }
 
-    // 原点の数字を一つだけ描画
-    drawText('0', -step * 0.5, -step * 0.5);
+    // 原点 (0,0) を描画
+    {
+        let oX = Math.max(camera.x - maxRangeX + textOffset, Math.min(0 - textOffset * 0.5, camera.x + maxRangeX - textOffset));
+        let oY = Math.max(camera.y - maxRangeY + textOffset, Math.min(0 - textOffset * 0.5, camera.y + maxRangeY - textOffset));
+        drawText('0', oX, oY, p.RIGHT, p.TOP);
+    }
 
     p.pop();
 }

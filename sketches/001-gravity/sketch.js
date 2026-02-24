@@ -29,7 +29,10 @@ const sketch = (p) => {
 
         pane = new Pane({ title: 'Physics Settings', expanded: true });
 
-        pane.addBinding(PARAMS, 'theme', {
+        // 設定ボタン（フォルダ）を追加
+        const settingsFolder = pane.addFolder({ title: '設定', expanded: false });
+
+        settingsFolder.addBinding(PARAMS, 'theme', {
             options: { Light: 'light', Dark: 'dark' },
             label: 'テーマ'
         }).on('change', (ev) => {
@@ -55,12 +58,6 @@ const sketch = (p) => {
             y = currentViewRange * 0.8;
             vy = 0;
         });
-
-        pane.addButton({ title: '視点リセット (Reset View)' }).on('click', () => {
-            camera.x = 0;
-            camera.y = 0;
-            camera.zoom = 1.0;
-        });
     };
 
     p.draw = () => {
@@ -70,12 +67,11 @@ const sketch = (p) => {
             p.background(247, 249, 252);
         }
 
-        // --- 【重要】カメラ操作と座標系の適用 ---
-        camera.update(); // WASDキー操作を反映
-        camera.apply();  // 座標系とスケールを適用
+        // --- 【重要】カメラ操作(パン・ズーム)と座標系の適用 ---
+        camera.apply();
 
-        // グリッドと座標の数字を描画（10区切り）
-        drawGrid(p, camera, 10, PARAMS.theme);
+        // DESMOS風の動的グリッドを描画
+        drawGrid(p, camera, PARAMS.theme);
 
         p.fill(PARAMS.color);
         p.noStroke();
