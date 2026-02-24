@@ -40,9 +40,12 @@ export class Camera {
 
         const originalMouseWheel = p.mouseWheel;
         p.mouseWheel = (event) => {
-            // ズームイン・アウト (ホイール回転量に応じて、速度を半減)
-            const zoomAmount = event.delta * 0.0005; // 0.001 -> 0.0005へ半減
-            const newZoom = this.zoom - zoomAmount;
+            // ズームイン・アウト (スクロール量に応じた指数関数的変化で、一定のズーム感覚にします)
+            // event.deltaが正ならズームアウト（縮小）、負ならズームイン（拡大）
+            // ホイールの1刻み(約100)で約5%ズームが変化するように調整
+            const zoomFactor = Math.pow(1.0005, -event.delta);
+            const newZoom = this.zoom * zoomFactor;
+
             // ズームの限界を設定
             this.zoom = this.p.constrain(newZoom, 0.01, 100.0);
 
@@ -124,11 +127,12 @@ export function drawGrid(p, camera, theme = 'light') {
     // 文字が軸から視覚的に常にピクセル単位で同じ距離にあるようにオフセットを計算
     const textOffset = 15 * weightScale;
 
-    // 数字フォーマット（小数点以下の桁数制御）
+    // 数字フォーマット（スケールの細かさに応じて小数点以下の表示桁数を動的に変更する）
     const formatNumber = (num) => {
-        // 浮動小数点誤差を丸める
-        const rounded = Math.round(num * 10000) / 10000;
-        return rounded.toString();
+        // stepの値(10, 1, 0.1, 0.01...) を元に、必要な小数点以下の桁数を計算する
+        // stepが1以上なら0桁、0.1なら1桁、0.01なら2桁を表示
+        const decimalPlaces = Math.max(0, -Math.floor(Math.log10(step)));
+        return num.toFixed(decimalPlaces);
     };
 
     // 数値の描画を行うヘルパー関数（Y軸が反転しているのでテキストが逆さまにならないようにする）
