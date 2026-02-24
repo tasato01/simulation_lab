@@ -224,3 +224,76 @@ export function drawGrid(p, camera, theme = 'light') {
 
     p.pop();
 }
+
+/**
+ * 2点を結ぶ線分を簡単に描画します。
+ * @param {import('p5')} p - p5.jsのインスタンス 
+ * @param {number} x1 - 始点X
+ * @param {number} y1 - 始点Y
+ * @param {number} x2 - 終点X
+ * @param {number} y2 - 終点Y
+ * @param {string} color - 線の色 (例: '#000000')
+ * @param {number} weight - 線の太さ (デフォルト: 2)
+ */
+export function drawLine(p, x1, y1, x2, y2, color = '#000000', weight = 2) {
+    p.push();
+    p.stroke(color);
+    p.strokeWeight(weight);
+    p.line(x1, y1, x2, y2);
+    p.pop();
+}
+
+/**
+ * 2点間を結ぶジグザグの「ばね」を描画します。
+ * @param {import('p5')} p - p5.jsのインスタンス
+ * @param {number} x1 - 始点X
+ * @param {number} y1 - 始点Y
+ * @param {number} x2 - 終点X
+ * @param {number} y2 - 終点Y
+ * @param {number} segments - ジグザグの折り返し回数 (デフォルト: 10)
+ * @param {number} width - ばねの幅 (デフォルト: 2)
+ * @param {string} color - ばねの色 (例: '#888888')
+ * @param {number} weight - ばねの線の太さ (デフォルト: 2)
+ */
+export function drawSpring(p, x1, y1, x2, y2, segments = 10, width = 2, color = '#888888', weight = 2) {
+    p.push();
+    p.stroke(color);
+    p.strokeWeight(weight);
+    p.noFill();
+
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    // 2点の角度を求める
+    const angle = Math.atan2(dy, dx);
+
+    // 描画の基準を(x1, y1)に移動し、終点に向けて回転させる
+    p.translate(x1, y1);
+    p.rotate(angle);
+
+    p.beginShape();
+    // 始点
+    p.vertex(0, 0);
+    // 直線部分 (始点側)
+    const straightLen = distance * 0.1; // 全体の10%はまっすぐな線にする
+    p.vertex(straightLen, 0);
+
+    // ジグザグ部分
+    const springLen = distance - straightLen * 2;
+    const segmentLen = springLen / segments;
+
+    for (let i = 0; i < segments; i++) {
+        const x = straightLen + segmentLen * i + segmentLen / 2;
+        // 上下にジグザグさせる
+        const y = (i % 2 === 0 ? width / 2 : -width / 2);
+        p.vertex(x, y);
+    }
+
+    // 直線部分 (終点側)
+    p.vertex(distance - straightLen, 0);
+    // 終点
+    p.vertex(distance, 0);
+
+    p.endShape();
+    p.pop();
+}

@@ -2,7 +2,7 @@ import p5 from 'p5';
 import { Pane } from 'tweakpane';
 import { GRAVITY } from '../../shared/physics.js';
 // カメラクラスと共通ユーティリティを読み込む
-import { Camera, drawGrid } from '../../shared/view.js';
+import { Camera, drawGrid, drawLine, drawSpring } from '../../shared/view.js';
 
 /**
  * ==========================================
@@ -25,7 +25,14 @@ const sketch = (p) => {
     let camera; // カメラインスタンス
     let isPaused = false; // シミュレーションの一時停止状態
 
-    // リアルタイム表示用の監視オブジェクト
+    // ==========================================
+    // 1. 状態変数の定義 (物体の位置や速度などを追加する場所)
+    // ==========================================
+    // 例: 円の座標や速度
+    let circleX = 0;
+    let circleY = 20;
+
+    // リアルタイム表示用の監視オブジェクト 
     const MONITOR = {
         time: 0
     };
@@ -33,8 +40,11 @@ const sketch = (p) => {
     p.setup = () => {
         p.createCanvas(p.windowWidth, p.windowHeight);
 
-        // 初期表示範囲を100としてカメラを生成
-        camera = new Camera(p, 100);
+        // ==========================================
+        // 2. 初期化処理 (画面サイズや初期設定などを記述する場所)
+        // ==========================================
+        // 初期表示範囲を6としてカメラを生成
+        camera = new Camera(p, 6);
 
         // サムネイル表示の場合はUIパネルを生成しない
         if (!isThumb) {
@@ -126,17 +136,31 @@ const sketch = (p) => {
         // DESMOS風の動的グリッドを描画
         drawGrid(p, camera, PARAMS.theme);
 
-        // オブジェクトの描画
-        p.fill(PARAMS.color);
-        p.noStroke();
-
-        // 画面の中央(0, 0)に円を描画
-        p.circle(0, Math.sin(MONITOR.time) * 20, PARAMS.radius * 2);
-
-        // --- 物理演算の更新 ---
+        // ==========================================
+        // 3. 状態の更新処理 (毎フレームの物理計算などを記述する場所)
+        // ==========================================
         if (!isPaused && !isThumb) {
             MONITOR.time += p.deltaTime / 1000;
+            // 例: 時間に応じて高さを変える
+            circleY = Math.sin(MONITOR.time) * 20;
         }
+
+        // ==========================================
+        // 4. 描画処理 (円や線を描画する場所)
+        // ==========================================
+        // 例1: 原点(0,0)から円の座標に向けてばねを描画する
+        const isDark = PARAMS.theme === 'dark';
+        const springColor = isDark ? '#aaaaaa' : '#888888';
+        // shared/view.jsで自作した関数を呼び出す
+        drawSpring(p, 0, 0, circleX, circleY, 15, 2, springColor, 2);
+
+        // （単なる線を引く場合は以下のようにします↓）
+        // drawLine(p, 0, 0, circleX, circleY, springColor, 2);
+
+        // 例2: オブジェクト(円)を描画
+        p.fill(PARAMS.color);
+        p.noStroke();
+        p.circle(circleX, circleY, PARAMS.radius * 2);
 
         // サムネイル時は1フレームだけ描画してループを停止することで負荷を軽減
         if (isThumb) {
