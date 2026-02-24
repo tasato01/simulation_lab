@@ -46,8 +46,8 @@ export class Camera {
             const zoomFactor = Math.pow(1.0005, -event.delta);
             const newZoom = this.zoom * zoomFactor;
 
-            // ズームの限界を設定
-            this.zoom = this.p.constrain(newZoom, 0.01, 100.0);
+            // ズームの限界をほぼ無限に設定
+            this.zoom = this.p.constrain(newZoom, 1e-10, 1e10);
 
             if (originalMouseWheel) originalMouseWheel(event);
             return false; // スクロールイベントをブラウザで発生させない

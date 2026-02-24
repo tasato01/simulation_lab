@@ -5,6 +5,7 @@ import { GRAVITY, DEFAULT_RESTITUTION } from '../../shared/physics.js';
 import { Camera, drawGrid } from '../../shared/view.js';
 
 const currentTheme = localStorage.getItem('sim_theme') || 'light';
+const isThumb = new URLSearchParams(window.location.search).get('thumb') === '1';
 
 const PARAMS = {
     theme: currentTheme, // 'light' or 'dark'
@@ -36,68 +37,77 @@ const sketch = (p) => {
         // 初期表示範囲を100としてカメラを生成
         camera = new Camera(p, 100);
 
-        pane = new Pane({ title: 'Physics Settings', expanded: true });
+        if (!isThumb) {
+            pane = new Pane({ title: 'Physics Settings', expanded: true });
 
-        // --- シミュレーション操作 ---
-        pane.addBinding(PARAMS, 'radius', { min: 2, max: 50, label: '半径' });
-        pane.addBinding(PARAMS, 'gravity', { min: 0, max: 30, label: '重力' });
-        pane.addBinding(PARAMS, 'restitution', { min: 0, max: 1, label: '反発係数' });
-        pane.addBinding(PARAMS, 'color', { label: '色' });
+            // --- シミュレーション操作 ---
+            pane.addBinding(PARAMS, 'radius', { min: 2, max: 50, label: '半径' });
+            pane.addBinding(PARAMS, 'gravity', { min: 0, max: 30, label: '重力' });
+            pane.addBinding(PARAMS, 'restitution', { min: 0, max: 1, label: '反発係数' });
+            pane.addBinding(PARAMS, 'color', { label: '色' });
 
-        // --- 再生 / 一時停止 ---
-        const playPauseBtn = pane.addButton({ title: '⏸ 一時停止 (Pause)' });
-        playPauseBtn.on('click', () => {
-            isPaused = !isPaused;
-            playPauseBtn.title = isPaused ? '▶ 再生 (Play)' : '⏸ 一時停止 (Pause)';
-        });
+            // --- 再生 / 一時停止 ---
+            const playPauseBtn = pane.addButton({ title: '⏸ 一時停止 (Pause)' });
+            playPauseBtn.on('click', () => {
+                isPaused = !isPaused;
+                playPauseBtn.title = isPaused ? '▶ 再生 (Play)' : '⏸ 一時停止 (Pause)';
+            });
 
-        // UIパネルにボタンを追加して、クリックされたら変数を初期化する処理
-        const resetBtn = pane.addButton({ title: '🔄 リセット (Reset Ball)' });
-        resetBtn.on('click', () => {
-            // 現在の画面の表示範囲の上部付近へ戻す
-            const currentViewRange = camera.baseViewRange;
-            y = currentViewRange * 0.8;
-            vy = 0;
-            MONITOR.y = y;
-            MONITOR.vy = vy;
-        });
+            // UIパネルにボタンを追加して、クリックされたら変数を初期化する処理
+            const resetBtn = pane.addButton({ title: '🔄 リセット (Reset Ball)' });
+            resetBtn.on('click', () => {
+                // 現在の画面の表示範囲の上部付近へ戻す
+                const currentViewRange = camera.baseViewRange;
+                y = currentViewRange * 0.8;
+                vy = 0;
+                MONITOR.y = y;
+                MONITOR.vy = vy;
+            });
 
-        // --- リアルタイムモニター ---
-        const monitorFolder = pane.addFolder({ title: '📊 リアルタイム変数', expanded: true });
-        // interval: 16 にすることで、約60FPSで滑らかに数値が更新されます
-        monitorFolder.addBinding(MONITOR, 'y', { readonly: true, label: '高さ (y)', format: (v) => v.toFixed(2), interval: 16 });
-        monitorFolder.addBinding(MONITOR, 'vy', { readonly: true, label: '速度 (vy)', format: (v) => v.toFixed(2), interval: 16 });
+            // --- リアルタイムモニター ---
+            const monitorFolder = pane.addFolder({ title: '📊 リアルタイム変数', expanded: true });
+            // interval: 16 にすることで、約60FPSで滑らかに数値が更新されます
+            monitorFolder.addBinding(MONITOR, 'y', { readonly: true, label: '高さ (y)', format: (v) => v.toFixed(2), interval: 16 });
+            monitorFolder.addBinding(MONITOR, 'vy', { readonly: true, label: '速度 (vy)', format: (v) => v.toFixed(2), interval: 16 });
 
-        // --- 設定フォルダ ---
-        const settingsFolder = pane.addFolder({ title: '⚙️ 設定 (Settings)', expanded: false });
+            // --- 設定フォルダ ---
+            const settingsFolder = pane.addFolder({ title: '⚙️ 設定 (Settings)', expanded: false });
 
-        settingsFolder.addBinding(PARAMS, 'theme', {
-            options: { Light: 'light', Dark: 'dark' },
-            label: '外観テーマ'
-        }).on('change', (ev) => {
-            localStorage.setItem('sim_theme', ev.value);
-            if (ev.value === 'dark') {
+            settingsFolder.addBinding(PARAMS, 'theme', {
+                options: { Light: 'light', Dark: 'dark' },
+                label: '外観テーマ'
+            }).on('change', (ev) => {
+                localStorage.setItem('sim_theme', ev.value);
+                if (ev.value === 'dark') {
+                    document.body.style.backgroundColor = '#1a1a1a';
+                    document.body.style.color = 'white';
+                } else {
+                    document.body.style.backgroundColor = '#f7f9fc';
+                    document.body.style.color = '#333';
+                }
+            });
+
+            if (PARAMS.theme === 'dark') {
                 document.body.style.backgroundColor = '#1a1a1a';
                 document.body.style.color = 'white';
-            } else {
-                document.body.style.backgroundColor = '#f7f9fc';
-                document.body.style.color = '#333';
             }
-        });
 
-        if (PARAMS.theme === 'dark') {
-            document.body.style.backgroundColor = '#1a1a1a';
-            document.body.style.color = 'white';
-        }
+            // --- 共有用コピーボタン ---
+            const copyBtn = settingsFolder.addButton({ title: '🔗 URLをコピー (Share)' });
+            copyBtn.on('click', () => {
+                let shareUrl = window.location.href;
+                shareUrl = shareUrl.replace('?thumb=1', '');
 
-        // --- 共有用コピーボタン ---
-        const copyBtn = settingsFolder.addButton({ title: '🔗 URLをコピー (Share)' });
-        copyBtn.on('click', () => {
-            navigator.clipboard.writeText(window.location.href).then(() => {
-                copyBtn.title = '✅ コピーしました！';
-                setTimeout(() => { copyBtn.title = '🔗 URLをコピー (Share)'; }, 2000);
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                    shareUrl = `https://tasato01.github.io/simulation_lab${window.location.pathname}`;
+                }
+
+                navigator.clipboard.writeText(shareUrl).then(() => {
+                    copyBtn.title = '✅ コピーしました！';
+                    setTimeout(() => { copyBtn.title = '🔗 URLをコピー (Share)'; }, 2000);
+                });
             });
-        });
+        }
     };
 
     p.draw = () => {
@@ -117,7 +127,7 @@ const sketch = (p) => {
         p.noStroke();
 
         // --- 物理演算のステップ ---
-        if (!isPaused) {
+        if (!isPaused && !isThumb) {
             const delta = p.deltaTime / 100;
             vy -= PARAMS.gravity * delta;
             y += vy * delta;
@@ -137,6 +147,10 @@ const sketch = (p) => {
 
         // 計算された最新のY座標を使って、X座標は0(中央)に円を描画する
         p.circle(0, y, PARAMS.radius * 2);
+
+        if (isThumb) {
+            p.noLoop();
+        }
     };
 
     p.windowResized = () => {

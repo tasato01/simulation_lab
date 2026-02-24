@@ -42,7 +42,7 @@ if (fs.existsSync(rootIndexPath)) {
             <li class="sketch-card">
                 <a href="./sketches/${sketchName}/">
                     <div class="iframe-container">
-                        <iframe src="./sketches/${sketchName}/" scrolling="no"></iframe>
+                        <iframe src="./sketches/${sketchName}/?thumb=1" scrolling="no"></iframe>
                     </div>
                     <div class="sketch-title">${sketchName}</div>
                 </a>
