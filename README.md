@@ -23,6 +23,24 @@ npm run new [スケッチ名]
 
 以降は作成された `sketches/002-collision/sketch.js` をエディタで編集するだけです。保存するとブラウザが自動更新（ホットリロード）され、即座にシミュレーション結果を確認できます。
 
+### 3. スケッチの共有と公開（GitHub Pages）
+作ったスケッチを友達に共有したい場合は、以下の手順で設定・公開を行います。
+
+**【初回のみの設定（リポジトリの作成）】**
+1. GitHub で新しいリポジトリ（例: `simulation_lab`）を作成します。
+2. ターミナルで以下のコマンドを実行し、GitHubにコードをPushします。
+```bash
+git branch -M main
+git remote add origin https://github.com/あなたのユーザー名/simulation_lab.git
+git push -u origin main
+```
+3. GitHubリポジトリの設定（Settings > Pages）で、Sourceを **「GitHub Actions」** に変更します。
+4. 数分待つと自動で `https://あなたのユーザー名.github.io/simulation_lab/` に公開されます。
+
+**【共有方法】**
+- **各スケッチの共有ボタン:** シミュレーション表示中のパラメータパネル内にある「🔗 URLをコピー (Share)」ボタンを押すと、今見ているスケッチの直接リンクがコピーされます。
+- **新しいスケッチを共有する時の注意点:** `npm run new` で新しいスケッチを作ったり、コードを編集した後は、必ず **Gitにコミット(`git commit`)してから `git push`** を行ってください。Pushから数分後に公開URLに最新版が自動反映されます。
+
 ---
 
 ## 共通ルールの利用と追加 (`shared/` ディレクトリ)

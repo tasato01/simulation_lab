@@ -38,8 +38,17 @@ fs.writeFileSync(indexHtmlPath, html);
 const rootIndexPath = path.join(rootDir, 'index.html');
 if (fs.existsSync(rootIndexPath)) {
     let rootHtml = fs.readFileSync(rootIndexPath, 'utf8');
-    const linkStr = `<li><a href="./sketches/${sketchName}/">${sketchName}</a></li>\n      <!-- 新しいスケッチはここに追加されます -->`;
-    rootHtml = rootHtml.replace('<!-- 新しいスケッチはここに追加されます -->', linkStr);
+    const linkStr = `
+            <li class="sketch-card">
+                <a href="./sketches/${sketchName}/">
+                    <div class="iframe-container">
+                        <iframe src="./sketches/${sketchName}/" scrolling="no"></iframe>
+                    </div>
+                    <div class="sketch-title">${sketchName}</div>
+                </a>
+            </li>
+            <!-- 新しいスケッチはここに追加されます -->`;
+    rootHtml = rootHtml.replace('<!-- 新しいスケッチはここに追加されます -->', linkStr.trim());
     fs.writeFileSync(rootIndexPath, rootHtml);
 }
 

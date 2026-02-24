@@ -4,8 +4,10 @@ import { Pane } from 'tweakpane';
 import { GRAVITY, DEFAULT_RESTITUTION } from '../../shared/physics.js';
 import { Camera, drawGrid } from '../../shared/view.js';
 
+const currentTheme = localStorage.getItem('sim_theme') || 'light';
+
 const PARAMS = {
-    theme: 'light', // 'light' or 'dark'
+    theme: currentTheme, // 'light' or 'dark'
     radius: 10,     // ボールの相対的な半径
     gravity: GRAVITY,
     // 跳ね返りやすさ。1.0で全くエネルギーを失わず、0でピタッと止まります
@@ -73,6 +75,7 @@ const sketch = (p) => {
             options: { Light: 'light', Dark: 'dark' },
             label: '外観テーマ'
         }).on('change', (ev) => {
+            localStorage.setItem('sim_theme', ev.value);
             if (ev.value === 'dark') {
                 document.body.style.backgroundColor = '#1a1a1a';
                 document.body.style.color = 'white';
@@ -80,6 +83,20 @@ const sketch = (p) => {
                 document.body.style.backgroundColor = '#f7f9fc';
                 document.body.style.color = '#333';
             }
+        });
+
+        if (PARAMS.theme === 'dark') {
+            document.body.style.backgroundColor = '#1a1a1a';
+            document.body.style.color = 'white';
+        }
+
+        // --- 共有用コピーボタン ---
+        const copyBtn = settingsFolder.addButton({ title: '🔗 URLをコピー (Share)' });
+        copyBtn.on('click', () => {
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                copyBtn.title = '✅ コピーしました！';
+                setTimeout(() => { copyBtn.title = '🔗 URLをコピー (Share)'; }, 2000);
+            });
         });
     };
 

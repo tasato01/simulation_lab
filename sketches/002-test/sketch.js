@@ -9,10 +9,8 @@ import { Camera, drawGrid } from '../../shared/view.js';
  * パラメータ設定 (Tweakpane用)
  * ==========================================
  */
-const currentTheme = localStorage.getItem('sim_theme') || 'light';
-
 const PARAMS = {
-    theme: currentTheme, // 'light' or 'dark'
+    theme: 'light', // 'light' or 'dark'
     radius: 10,
     gravity: GRAVITY,
     color: '#ff0055'
@@ -69,8 +67,6 @@ const sketch = (p) => {
             options: { Light: 'light', Dark: 'dark' },
             label: '外観テーマ'
         }).on('change', (ev) => {
-            // ローカルストレージに保存
-            localStorage.setItem('sim_theme', ev.value);
             // テーマ変更時にHTMLの背景色も合わせる
             if (ev.value === 'dark') {
                 document.body.style.backgroundColor = '#1a1a1a';
@@ -79,21 +75,6 @@ const sketch = (p) => {
                 document.body.style.backgroundColor = '#f7f9fc';
                 document.body.style.color = '#333';
             }
-        });
-
-        // テーマの初回適用
-        if (PARAMS.theme === 'dark') {
-            document.body.style.backgroundColor = '#1a1a1a';
-            document.body.style.color = 'white';
-        }
-
-        // --- 共有用コピーボタン ---
-        const copyBtn = settingsFolder.addButton({ title: '🔗 URLをコピー (Share)' });
-        copyBtn.on('click', () => {
-            navigator.clipboard.writeText(window.location.href).then(() => {
-                copyBtn.title = '✅ コピーしました！';
-                setTimeout(() => { copyBtn.title = '🔗 URLをコピー (Share)'; }, 2000);
-            });
         });
     };
 

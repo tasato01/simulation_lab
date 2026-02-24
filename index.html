@@ -12,80 +12,166 @@
             background-color: #f7f9fc;
             color: #333;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.dark {
+            background-color: #1a1a1a;
+            color: #f7f9fc;
         }
 
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             padding: 40px 20px;
+            position: relative;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
         }
 
         h1 {
             color: #ff0055;
             font-weight: 300;
-            margin-bottom: 30px;
+            margin: 0;
+        }
+
+        .theme-toggle {
+            padding: 8px 16px;
+            cursor: pointer;
+            border-radius: 20px;
+            border: 1px solid #ccc;
+            background: #fff;
+            color: #333;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        body.dark .theme-toggle {
+            background: #333;
+            color: #fff;
+            border-color: #555;
         }
 
         ul.sketch-list {
             list-style-type: none;
             padding: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
         }
 
-        ul.sketch-list li {
-            margin-bottom: 10px;
-        }
-
-        ul.sketch-list a {
-            display: block;
-            padding: 15px 20px;
-            background-color: #ffffff;
-            color: #0077ff;
-            text-decoration: none;
+        .sketch-card {
             border-radius: 8px;
+            overflow: hidden;
+            background: #ffffff;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s, background-color 0.3s;
         }
 
-        ul.sketch-list a:hover {
-            background-color: #f0f4ff;
-            transform: translateX(5px);
-            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.1);
+        body.dark .sketch-card {
+            background: #2a2a2a;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
         }
 
-        .new-button {
-            display: inline-block;
-            margin-top: 30px;
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
+        .sketch-card a {
             text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
+            color: inherit;
+            display: block;
         }
 
-        .new-button:hover {
-            background-color: #45a049;
+        .sketch-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        body.dark .sketch-card:hover {
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        .iframe-container {
+            width: 100%;
+            height: 180px;
+            border-bottom: 1px solid #eee;
+            position: relative;
+            overflow: hidden;
+            background: #f7f9fc;
+        }
+
+        body.dark .iframe-container {
+            border-bottom-color: #444;
+            background: #1a1a1a;
+        }
+
+        /* iframeを約60%に縮小してサムネイルとして表示 */
+        .iframe-container iframe {
+            width: 166.66%;
+            height: 300px;
+            border: none;
+            transform: scale(0.6);
+            transform-origin: top left;
+            pointer-events: none;
+        }
+
+        .sketch-title {
+            padding: 15px;
+            font-weight: bold;
+            text-align: center;
+            color: #0077ff;
+            font-size: 1.1em;
+        }
+
+        body.dark .sketch-title {
+            color: #4db8ff;
         }
 
         .hint-box {
-            margin-top: 40px;
+            margin-top: 50px;
             padding: 20px;
             background: #fff;
             border: 1px solid #ddd;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        body.dark .hint-box {
+            background: #2a2a2a;
+            border-color: #444;
         }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h1>Simulation Lab</h1>
+        <div class="header-content">
+            <h1>Simulation Lab</h1>
+            <button class="theme-toggle" id="themeToggle">🌓 テーマ切替</button>
+        </div>
         <p>思いついたアイデアをすぐに形にするための物理シミュレーション環境です。</p>
 
         <h2>Sketches</h2>
         <ul class="sketch-list" id="sketches">
-            <li><a href="./sketches/001-gravity/">001-gravity</a></li>
+            <li class="sketch-card">
+                <a href="./sketches/001-gravity/">
+                    <div class="iframe-container">
+                        <iframe src="./sketches/001-gravity/" scrolling="no"></iframe>
+                    </div>
+                    <div class="sketch-title">001-gravity</div>
+                </a>
+            </li>
+            <li class="sketch-card">
+                <a href="./sketches/002-test/">
+                    <div class="iframe-container">
+                        <iframe src="./sketches/002-test/" scrolling="no"></iframe>
+                    </div>
+                    <div class="sketch-title">002-test</div>
+                </a>
+            </li>
             <!-- 新しいスケッチはここに追加されます -->
         </ul>
 
@@ -95,6 +181,28 @@
             <code>npm run new 002-my-idea</code>
         </div>
     </div>
+
+    <script>
+        // テーマの保存状態を確認・反映
+        const savedTheme = localStorage.getItem('sim_theme') || 'light';
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark');
+        }
+
+        // テーマ切替ボタンの処理
+        const btn = document.getElementById('themeToggle');
+        btn.addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+            const isDark = document.body.classList.contains('dark');
+            localStorage.setItem('sim_theme', isDark ? 'dark' : 'light');
+
+            // iframe内のテーマにも反映させるためリロード(少し力技ですが手軽です)
+            const iframes = document.querySelectorAll('iframe');
+            iframes.forEach(iframe => {
+                iframe.src = iframe.src;
+            });
+        });
+    </script>
 </body>
 
 </html>
