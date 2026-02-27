@@ -21,9 +21,20 @@ export class Camera {
 
         const originalMouseDragged = p.mouseDragged;
         p.mouseDragged = (event) => {
-            // Tweakpaneの操作中はカメラを動かさない (画面の半分までとする)
-            const uiWidth = Math.min(320, p.width * 0.5);
-            if (p.mouseX < uiWidth && p.mouseY < 600) {
+            // Tweakpaneが展開されている時のみ、UI操作領域のカメラ移動を無効化する
+            // pane要素から .tp-fldv-c (フォルダコンテンツ) や .tp-dfwv (ルート) の開閉状態を推測
+            const paneEl = document.querySelector('.tp-dfwv');
+            let isPaneOpen = true;
+            if (paneEl && paneEl.classList.contains('tp-v-expanded') === false && paneEl.querySelector('.tp-rotv-expanded') === null) {
+                // Tweakpane全体が閉じられているかチェック（TweakpaneのDOM構造により判定）
+                isPaneOpen = paneEl.querySelector('.tp-fldv_c') ? paneEl.querySelector('.tp-fldv_c').style.display !== 'none' : true;
+            }
+            // 簡易的に幅で判定（閉じている時は幅が数十ピクセルになることが多い）
+            const uiRect = paneEl ? paneEl.getBoundingClientRect() : { width: 320, height: 600, left: 15, top: 15 };
+
+            // UIの実際の矩形範囲内でのみガードする
+            if (p.mouseX >= uiRect.left && p.mouseX <= uiRect.left + uiRect.width &&
+                p.mouseY >= uiRect.top && p.mouseY <= uiRect.top + uiRect.height) {
                 if (originalMouseDragged) originalMouseDragged(event);
                 return;
             }
@@ -59,6 +70,17 @@ export class Camera {
         let initialZoom = 1.0;
         let isPinching = false;
 
+        // 【最重要】ブラウザのネイティブなピンチズームやスクロールを強制ブロックする
+        // (p5.js の return false だけでは iOS Safari などで防げないため)
+        if (!window.__touchMoveBlocked) {
+            window.__touchMoveBlocked = true;
+            document.addEventListener('touchmove', function (e) {
+                if (e.touches && e.touches.length > 1) {
+                    e.preventDefault(); // 2本指以上のブラウザ本来のズームを確実に防ぐ
+                }
+            }, { passive: false });
+        }
+
         const originalTouchStarted = p.touchStarted;
         p.touchStarted = (event) => {
             if (p.touches.length === 2) {
@@ -73,11 +95,14 @@ export class Camera {
 
         const originalTouchMoved = p.touchMoved;
         p.touchMoved = (event) => {
-            // Tweakpaneの操作中はカメラを動かさない
-            const uiWidth = Math.min(320, p.width * 0.5);
-            if (p.touches.length > 0 && p.touches[0].x < uiWidth && p.touches[0].y < 600) {
+            const paneEl = document.querySelector('.tp-dfwv');
+            const uiRect = paneEl ? paneEl.getBoundingClientRect() : { width: 320, height: 600, left: 15, top: 15 };
+
+            if (p.touches.length > 0 &&
+                p.touches[0].x >= uiRect.left && p.touches[0].x <= uiRect.left + uiRect.width &&
+                p.touches[0].y >= uiRect.top && p.touches[0].y <= uiRect.top + uiRect.height) {
                 if (originalTouchMoved) originalTouchMoved(event);
-                return;
+                return; // UIの矩形内をタッチしている場合はカメラを動かさない
             }
 
             if (p.touches.length === 1) {
