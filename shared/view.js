@@ -57,12 +57,16 @@ export class Camera {
         // タッチ操作用変数
         let initialPinchDistance = 0;
         let initialZoom = 1.0;
+        let isPinching = false;
 
         const originalTouchStarted = p.touchStarted;
         p.touchStarted = (event) => {
             if (p.touches.length === 2) {
+                isPinching = true;
                 initialPinchDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
                 initialZoom = this.zoom;
+            } else {
+                isPinching = false;
             }
             if (originalTouchStarted) originalTouchStarted(event);
         };
@@ -77,6 +81,7 @@ export class Camera {
             }
 
             if (p.touches.length === 1) {
+                isPinching = false;
                 // 1本指: パン移動 (pmouseX, pmouseY を利用)
                 const minDim = Math.min(p.width, p.height);
                 const currentViewRange = this.baseViewRange / this.zoom;
@@ -94,12 +99,18 @@ export class Camera {
             } else if (p.touches.length === 2) {
                 // 2本指: ピンチ操作によるズーム
                 const currentDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
-                if (initialPinchDistance > 0) {
+                if (!isPinching) {
+                    isPinching = true;
+                    initialPinchDistance = currentDistance;
+                    initialZoom = this.zoom;
+                } else if (initialPinchDistance > 0) {
                     const pinchFactor = currentDistance / initialPinchDistance;
                     this.zoom = this.p.constrain(initialZoom * pinchFactor, 1e-10, 1e10);
                 }
                 if (originalTouchMoved) originalTouchMoved(event);
                 return false; // スクロール防止
+            } else {
+                isPinching = false;
             }
 
             if (originalTouchMoved) originalTouchMoved(event);
