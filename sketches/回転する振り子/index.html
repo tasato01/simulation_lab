@@ -97,13 +97,15 @@
 <body>
   <!-- 説明文パネル -->
   <div class="description-panel">
-    <h2>シミュレーションの説明</h2>
-    <p>ここにMarkdown風に内容を記述します。</p>
+    <h2>回転する振り子</h2>
+    <p>摩擦のないリングに沿って運動する振り子のシミュレーションです。</p>
     <ul>
-      <li>箇条書き 1</li>
-      <li>箇条書き 2</li>
+      <li>接線方向の加速度：</li>
+      <p>$\alpha = r\omega_{base}^2sin\theta cos\theta - gsin\theta$</p>
+      <li>加速度が０となる平衡点を点で示しています。</li>
+      <p>$\theta_e = cos^{-1}(g/{r\omega_{base}^2})$ または $0$</p>
+      <li></li>
     </ul>
-    <p>数式も書けます： $\theta = \omega t$ や $$E = mc^2$$ など。</p>
   </div>
 
   <script type="module" src="./sketch.js"></script>

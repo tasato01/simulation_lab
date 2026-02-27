@@ -27,7 +27,7 @@ const PARAMS = {
 // ユーザーがUIからいじれるようにするため、windowオブジェクトなどのプロパティにします
 // (単純なlet宣言だとtweakpaneから参照しにくいため、専用のオブジェクトで包むのがおすすめです)
 let STATE = {
-    omega_base: 2.0, // リングの角速度
+    omega_base: 2, // リングの角速度
     radius: 1.0,     // 振り子の長さ
     theta_zero: Math.PI / 6 // 初期の振り角度
 };
@@ -35,6 +35,7 @@ let STATE = {
 // 内部計算用の変数
 let omega = 0;
 let theta = 0;
+let acc = 0; // 加速度 (Monitor表示用)
 let theta_base = 0.0; // リングの角度
 
 // ==========================================
@@ -44,6 +45,7 @@ function setupSimulation(p) {
     // 画面初期化時やリセット時に呼ばれます
     theta = STATE.theta_zero;
     omega = 0;
+    acc = 0;
     theta_base = 0.0;
 }
 
@@ -54,7 +56,7 @@ function setupSimulation(p) {
 function updateSimulation(p, time, deltaTime) {
     // 回転する振り子の運動方程式の計算
     // 加速度 (acc) の算出: 重力パラメータは PARAMS.gravity を使用
-    const acc = STATE.radius * (STATE.omega_base ** 2) * Math.sin(theta) * Math.cos(theta) - PARAMS.gravity * Math.sin(theta);
+    acc = STATE.radius * (STATE.omega_base ** 2) * Math.sin(theta) * Math.cos(theta) - PARAMS.gravity * Math.sin(theta);
 
     // 速度・角度の積分
     omega += (acc / STATE.radius) * deltaTime;
@@ -140,9 +142,9 @@ function setupUI(pane, monitorFolder) {
 
     // リアルタイム変数の監視
     // getterを使って計算中の変数を読み取らせる
-    // 小数点以下の桁数が変わってカクカクするのを防ぐため toFixed で桁を揃えます
-    monitorFolder.addBinding({ get theta() { return Number(theta.toFixed(3)); } }, 'theta', { readonly: true, label: '現在角度(θ)', interval: 50 });
-    monitorFolder.addBinding({ get omega() { return Number(omega.toFixed(3)); } }, 'omega', { readonly: true, label: '現在角速度(ω)', interval: 50 });
+    monitorFolder.addBinding({ get theta() { return Number(theta.toFixed(3)); } }, 'theta', { readonly: true, label: '現在角度(θ)', interval: 60 });
+    monitorFolder.addBinding({ get omega() { return Number(omega.toFixed(3)); } }, 'omega', { readonly: true, label: '現在角速度(ω)', interval: 60 });
+    monitorFolder.addBinding({ get acc() { return Number(acc.toFixed(3)); } }, 'acc', { readonly: true, label: '現在角加速度(α)', interval: 60 });
 }
 
 
@@ -167,7 +169,7 @@ const sketch = (p) => {
         p.createCanvas(p.windowWidth, p.windowHeight);
 
         // 初期表示範囲を6としてカメラを生成
-        camera = new Camera(p, 3);
+        camera = new Camera(p, 4.2);
 
         // ユーザーの初期化処理を呼ぶ
         setupSimulation(p);
