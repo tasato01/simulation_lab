@@ -49,10 +49,51 @@
       line-height: 1.6;
       border: 1px solid rgba(0, 0, 0, 0.05);
       z-index: 10;
-      transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+      transition: all 0.3s ease;
+    }
+
+    /* パネルのタイトル部分（クリックで開閉） */
+    .description-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .description-header h2 {
+      margin: 0 !important;
+      padding: 0 !important;
+      border: none !important;
+      font-size: 16px !important;
+    }
+
+    .collapse-icon {
+      font-weight: bold;
+      transition: transform 0.3s ease;
+    }
+
+    /* 折りたたまれた状態 */
+    .description-panel.collapsed {
+      width: 140px;
+      padding: 10px 16px;
+    }
+
+    .description-panel.collapsed .description-content {
+      display: none;
+    }
+
+    .description-panel.collapsed .collapse-icon {
+      transform: rotate(-180deg);
     }
 
     /* パネル内の文字スタイル */
+    .description-content {
+      margin-top: 12px;
+      border-top: 2px solid #eaeaea;
+      padding-top: 12px;
+    }
+
     .description-panel h1,
     .description-panel h2,
     .description-panel h3 {
@@ -87,29 +128,41 @@
 
     body.theme-dark .description-panel h1,
     body.theme-dark .description-panel h2,
-    body.theme-dark .description-panel h3 {
+    body.theme-dark .description-panel h3,
+    body.theme-dark .description-content {
       color: #fff;
       border-bottom-color: #444;
+      border-top-color: #444;
     }
   </style>
 </head>
 
 <body>
   <!-- 説明文パネル -->
-  <div class="description-panel">
-    <h2>シミュレーションの説明</h2>
-    <p>ここにMarkdown風に内容を記述します。</p>
-    <ul>
-      <li>箇条書き 1</li>
-      <li>箇条書き 2</li>
-    </ul>
-    <p>数式も書けます： $\theta = \omega t$ や $$E = mc^2$$ など。</p>
+  <div class="description-panel" id="description-panel">
+    <div class="description-header" onclick="toggleDescription()">
+      <h2>シミュレーションの説明</h2>
+      <span class="collapse-icon">▲</span>
+    </div>
+    <div class="description-content">
+      <p>ここにMarkdown風に内容を記述します。</p>
+      <ul>
+        <li>箇条書き 1</li>
+        <li>箇条書き 2</li>
+      </ul>
+      <p>数式も書けます： $\theta = \omega t$ や $$E = mc^2$$ など。</p>
+    </div>
   </div>
 
   <script type="module" src="./sketch.js"></script>
 
   <!-- HTML読み込み完了後にKaTeXを自動描画 -->
   <script>
+    function toggleDescription() {
+      const panel = document.getElementById('description-panel');
+      panel.classList.toggle('collapsed');
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
       renderMathInElement(document.getElementById('description-panel') || document.body, {
         delimiters: [
