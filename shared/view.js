@@ -21,8 +21,9 @@ export class Camera {
 
         const originalMouseDragged = p.mouseDragged;
         p.mouseDragged = (event) => {
-            // Tweakpaneの操作中はカメラを動かさない (UIの幅を約320pxと想定し左側をガード)
-            if (p.mouseX < 320 && p.mouseY < 600) {
+            // Tweakpaneの操作中はカメラを動かさない (画面の半分までとする)
+            const uiWidth = Math.min(320, p.width * 0.5);
+            if (p.mouseX < uiWidth && p.mouseY < 600) {
                 if (originalMouseDragged) originalMouseDragged(event);
                 return;
             }
@@ -51,6 +52,57 @@ export class Camera {
 
             if (originalMouseWheel) originalMouseWheel(event);
             return false; // スクロールイベントをブラウザで発生させない
+        };
+
+        // タッチ操作用変数
+        let initialPinchDistance = 0;
+        let initialZoom = 1.0;
+
+        const originalTouchStarted = p.touchStarted;
+        p.touchStarted = (event) => {
+            if (p.touches.length === 2) {
+                initialPinchDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
+                initialZoom = this.zoom;
+            }
+            if (originalTouchStarted) originalTouchStarted(event);
+        };
+
+        const originalTouchMoved = p.touchMoved;
+        p.touchMoved = (event) => {
+            // Tweakpaneの操作中はカメラを動かさない
+            const uiWidth = Math.min(320, p.width * 0.5);
+            if (p.touches.length > 0 && p.touches[0].x < uiWidth && p.touches[0].y < 600) {
+                if (originalTouchMoved) originalTouchMoved(event);
+                return;
+            }
+
+            if (p.touches.length === 1) {
+                // 1本指: パン移動 (pmouseX, pmouseY を利用)
+                const minDim = Math.min(p.width, p.height);
+                const currentViewRange = this.baseViewRange / this.zoom;
+                const scaleFactor = (minDim / 2) / currentViewRange;
+
+                // movedX / movedY に相当する差分
+                const dx = p.mouseX - p.pmouseX;
+                const dy = p.mouseY - p.pmouseY;
+
+                this.x -= dx / scaleFactor;
+                this.y += dy / scaleFactor;
+
+                if (originalTouchMoved) originalTouchMoved(event);
+                return false; // スクロール防止
+            } else if (p.touches.length === 2) {
+                // 2本指: ピンチ操作によるズーム
+                const currentDistance = p.dist(p.touches[0].x, p.touches[0].y, p.touches[1].x, p.touches[1].y);
+                if (initialPinchDistance > 0) {
+                    const pinchFactor = currentDistance / initialPinchDistance;
+                    this.zoom = this.p.constrain(initialZoom * pinchFactor, 1e-10, 1e10);
+                }
+                if (originalTouchMoved) originalTouchMoved(event);
+                return false; // スクロール防止
+            }
+
+            if (originalTouchMoved) originalTouchMoved(event);
         };
     }
 
@@ -255,7 +307,7 @@ export function drawLine(p, x1, y1, x2, y2, color = '#000000', weight = 2) {
  * @param {string} color - ばねの色 (例: '#888888')
  * @param {number} weight - ばねの線の太さ (デフォルト: 2)
  */
-export function drawSpring(p, x1, y1, x2, y2, waves = 10, width = 2, color = '#888888', weight = 0.1) {
+export function drawSpring(p, x1, y1, x2, y2, waves = 10, width = 2, color = '#888888', weight = 2) {
     p.push();
     p.stroke(color);
     p.strokeWeight(weight);
