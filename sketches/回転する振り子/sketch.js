@@ -27,7 +27,7 @@ const PARAMS = {
 // ユーザーがUIからいじれるようにするため、windowオブジェクトなどのプロパティにします
 // (単純なlet宣言だとtweakpaneから参照しにくいため、専用のオブジェクトで包むのがおすすめです)
 let STATE = {
-    omega_base: 2.0, // 基準の角速度
+    omega_base: 2.0, // リングの角速度
     radius: 1.0,     // 振り子の長さ
     theta_zero: Math.PI / 6 // 初期の振り角度
 };
@@ -35,7 +35,7 @@ let STATE = {
 // 内部計算用の変数
 let omega = 0;
 let theta = 0;
-
+let theta_base = 0.0; // リングの角度
 
 // ==========================================
 // 2. 初期化処理 (画面サイズや初期設定などを記述する場所)
@@ -44,6 +44,7 @@ function setupSimulation(p) {
     // 画面初期化時やリセット時に呼ばれます
     theta = STATE.theta_zero;
     omega = 0;
+    theta_base = 0.0;
 }
 
 // ==========================================
@@ -58,6 +59,7 @@ function updateSimulation(p, time, deltaTime) {
     // 速度・角度の積分
     omega += (acc / STATE.radius) * deltaTime;
     theta += omega * deltaTime;
+    theta_base += STATE.omega_base * deltaTime;
 }
 
 // ==========================================
@@ -67,28 +69,51 @@ function drawSimulation(p) {
     const isDark = PARAMS.theme === 'dark';
     const springColor = isDark ? '#aaaaaa' : '#888888';
 
-    // 変数を取り出す
-    const { radius } = STATE;
+    // 変数を取り出す (STATE と PARAMS から)
+    const { radius, omega_base } = STATE;
+    const { gravity } = PARAMS;
 
     // 角度から x, y 座標を計算 (原点0, 0からの距離 radius)
-    // 数学的に下向きを0度とするなら sin, cos を調整します（ここはY上向き座標系です）
-    // - Math.PI / 2 を引くことで、theta=0の時に真下(Yのマイナス方向)に向くようにします。
-    const bobX = radius * Math.cos(theta - Math.PI / 2);
-    const bobY = radius * Math.sin(theta - Math.PI / 2);
+    // - Math.PI / 2 を引くことで、theta=0の時に真下(Yのマイナス方向)に向くように合わせる
+    const bob1 = { x: radius * Math.cos(theta - Math.PI / 2), y: radius * Math.sin(theta - Math.PI / 2) }
+    const base0 = { x: radius * Math.cos(theta_base), y: radius * Math.sin(theta_base) }
+    const base1 = { x: radius * Math.cos(theta_base + Math.PI), y: radius * Math.sin(theta_base + Math.PI) }
+    const bob2 = { x: base0.x * Math.cos(theta - Math.PI / 2), y: base0.y * Math.cos(theta - Math.PI / 2) + radius * 3 }
+    const bob3 = { x: radius * 3, y: radius * Math.sin(theta - Math.PI / 2) }
+    const bob4 = { x: radius * Math.cos(theta - Math.PI / 2), y: -radius * 3 }
+    const bob5 = { x: bob1.x * Math.cos(theta_base) - radius * 3, y: bob1.y }
 
-    // 原点から振り子の重り(bob)までの線を描画
-    drawLine(p, 0, 0, bobX, bobY, springColor, 0.05);
+    // 平衡点の角度計算
+    const cosVal = gravity / (radius * omega_base ** 2);
+
+    drawLine(p, 0, 0, bob1.x, bob1.y, springColor, 0.02);
+    drawLine(p, base0.x, base0.y + radius * 3, base1.x, base1.y + radius * 3, springColor, 0.02);
+    drawLine(p, radius * 3, -radius, radius * 3, radius, springColor, 0.02);
+    drawLine(p, -radius, -radius * 3, radius, -radius * 3, springColor, 0.02);
 
     p.noFill();
     p.stroke(springColor);
     p.strokeWeight(0.02);
     p.circle(0, 0, radius * 2);
+    p.ellipse(-radius * 3, 0, radius * 2 * Math.cos(theta_base), radius * 2);
 
-    // オブジェクト(重り)を描画。半径(radius)は描画用の大きさに調整して使います
+    // オブジェクト(重り)を描画
     p.fill(PARAMS.color);
     p.noStroke();
-    p.circle(bobX, bobY, 0.2);
+    p.circle(bob1.x, bob1.y, 0.2);
+    p.circle(bob2.x, bob2.y, 0.2);
+    p.circle(bob3.x, bob3.y, 0.2);
+    p.circle(bob4.x, bob4.y, 0.2);
+    p.circle(bob5.x, bob5.y, 0.2);
 
+    // 平衡点が存在する場合のみ描画
+    if (Math.abs(cosVal) <= 1) {
+        const theta_center = Math.acos(cosVal);
+        p.fill('#44ff44'); // 平衡点は緑色に
+        p.circle(radius * Math.cos(theta_center - Math.PI / 2), radius * Math.sin(theta_center - Math.PI / 2), 0.1);
+        // 反対側も
+        p.circle(radius * Math.cos(-theta_center - Math.PI / 2), radius * Math.sin(-theta_center - Math.PI / 2), 0.1);
+    }
 }
 
 // ==========================================
@@ -96,9 +121,9 @@ function drawSimulation(p) {
 // ==========================================
 function setupUI(pane, monitorFolder) {
     // スライダーの追加 (STATE内の変数を紐付け)
-    pane.addBinding(STATE, 'omega_base', { min: 0, max: 10, label: '基準角速度' });
+    pane.addBinding(STATE, 'omega_base', { min: 0, max: 10, label: 'リングの角速度' });
     pane.addBinding(STATE, 'radius', { min: 0.1, max: 10, label: '振り子の長さ' });
-    pane.addBinding(STATE, 'theta_zero', { min: -Math.PI, max: Math.PI, label: '初期角度(θ0)' });
+    pane.addBinding(STATE, 'theta_zero', { min: 0, max: Math.PI, label: '初期角度(θ0)' });
 
     // リアルタイム変数の監視
     // getterを使って計算中の変数を読み取らせる
