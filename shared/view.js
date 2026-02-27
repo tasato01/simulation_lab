@@ -244,18 +244,18 @@ export function drawLine(p, x1, y1, x2, y2, color = '#000000', weight = 2) {
 }
 
 /**
- * 2点間を結ぶジグザグの「ばね」を描画します。
+ * 2点間を結ぶサイン波の「ばね」を描画します。
  * @param {import('p5')} p - p5.jsのインスタンス
  * @param {number} x1 - 始点X
  * @param {number} y1 - 始点Y
  * @param {number} x2 - 終点X
  * @param {number} y2 - 終点Y
- * @param {number} segments - ジグザグの折り返し回数 (デフォルト: 10)
- * @param {number} width - ばねの幅 (デフォルト: 2)
+ * @param {number} waves - サイン波の波の数 (デフォルト: 10)
+ * @param {number} width - ばねの振幅幅 (デフォルト: 2)
  * @param {string} color - ばねの色 (例: '#888888')
  * @param {number} weight - ばねの線の太さ (デフォルト: 2)
  */
-export function drawSpring(p, x1, y1, x2, y2, segments = 10, width = 2, color = '#888888', weight = 2) {
+export function drawSpring(p, x1, y1, x2, y2, waves = 10, width = 2, color = '#888888', weight = 2) {
     p.push();
     p.stroke(color);
     p.strokeWeight(weight);
@@ -278,14 +278,18 @@ export function drawSpring(p, x1, y1, x2, y2, segments = 10, width = 2, color = 
     const straightLen = distance * 0.1; // 全体の10%はまっすぐな線にする
     p.vertex(straightLen, 0);
 
-    // ジグザグ部分
+    // サイン波部分
     const springLen = distance - straightLen * 2;
-    const segmentLen = springLen / segments;
+    // 描画品質のための分割数（波1つにつき約20分割）
+    const resolution = Math.max(20, waves * 20);
 
-    for (let i = 0; i < segments; i++) {
-        const x = straightLen + segmentLen * i + segmentLen / 2;
-        // 上下にジグザグさせる
-        const y = (i % 2 === 0 ? width / 2 : -width / 2);
+    for (let i = 0; i <= resolution; i++) {
+        // 0.0 から 1.0 までの進行度
+        const t = i / resolution;
+
+        const x = straightLen + springLen * t;
+        // 進行度t に対して waves 回分のサイン波を描く (1波 = 2*PI)
+        const y = Math.sin(t * waves * Math.PI * 2) * (width / 2);
         p.vertex(x, y);
     }
 

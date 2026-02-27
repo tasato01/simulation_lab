@@ -15,7 +15,6 @@ const isThumb = new URLSearchParams(window.location.search).get('thumb') === '1'
 
 const PARAMS = {
     theme: currentTheme, // 'light' or 'dark'
-    radius: 10,
     gravity: GRAVITY,
     color: '#ff0055'
 };
@@ -23,17 +22,27 @@ const PARAMS = {
 // ==========================================
 // 1. 状態変数の定義 (物体の位置や速度などを追加する場所)
 // ==========================================
-// 例: 円の座標や速度
-let circleX = 0;
-let circleY = 20;
+// 例: 回転する振り子の変数
+// ユーザーがUIからいじれるようにするため、windowオブジェクトなどのプロパティにします
+// (単純なlet宣言だとtweakpaneから参照しにくいため、専用のオブジェクトで包むのがおすすめです)
+const STATE = {
+    omega_base: 2.0, // 基準の角速度
+    radius: 3.0,     // 振り子の長さ
+    theta_zero: Math.PI / 6 // 初期の振り角度
+};
+
+// 内部計算用の変数
+let omega = 0;
+let theta = 0;
+
 
 // ==========================================
 // 2. 初期化処理 (画面サイズや初期設定などを記述する場所)
 // ==========================================
 function setupSimulation(p) {
     // 画面初期化時やリセット時に呼ばれます
-    circleX = 0;
-    circleY = 20;
+    theta = STATE.theta_zero;
+    omega = 0;
 }
 
 // ==========================================
@@ -41,36 +50,53 @@ function setupSimulation(p) {
 // ==========================================
 // 引数 time はシミュレーションの経過時間、deltaTime は前フレームからの経過時間
 function updateSimulation(p, time, deltaTime) {
-    // 例: 時間に応じて高さを変える
-    circleY = Math.sin(time) * 20;
+    // 回転する振り子の運動方程式の計算
+    // 加速度 (acc) の算出: 重力パラメータは PARAMS.gravity を使用
+    const acc = STATE.radius * (STATE.omega_base ** 2) * Math.sin(theta) * Math.cos(theta) - PARAMS.gravity * Math.sin(theta);
+
+    // 速度・角度の積分
+    omega += (acc / STATE.radius) * deltaTime;
+    theta += omega * deltaTime;
 }
 
 // ==========================================
 // 4. 描画処理 (円や線を描画する場所)
 // ==========================================
 function drawSimulation(p) {
-    // 例1: 原点(0,0)から円の座標に向けてばねを描画する
     const isDark = PARAMS.theme === 'dark';
     const springColor = isDark ? '#aaaaaa' : '#888888';
 
-    // shared/view.jsで自作した関数を呼び出す
-    drawSpring(p, 0, 0, circleX, circleY, 15, 2, springColor, 2);
+    // 角度から x, y 座標を計算 (原点0, 0からの距離 radius)
+    // 数学的に下向きを0度とするなら sin, cos を調整します（ここはY上向き座標系です）
+    // - Math.PI / 2 を引くことで、theta=0の時に真下(Yのマイナス方向)に向くようにします。
+    const bobX = STATE.radius * Math.cos(theta - Math.PI / 2);
+    const bobY = STATE.radius * Math.sin(theta - Math.PI / 2);
 
-    // （単なる線を引く場合は以下のようにします↓）
-    // drawLine(p, 0, 0, circleX, circleY, springColor, 2);
+    // 原点から振り子の重り(bob)までの線を描画
+    drawLine(p, 0, 0, bobX, bobY, springColor, 2);
 
-    // 例2: オブジェクト(円)を描画
+    // オブジェクト(重り)を描画。半径(radius)は描画用の大きさに調整して使います
     p.fill(PARAMS.color);
     p.noStroke();
-    p.circle(circleX, circleY, PARAMS.radius * 2);
+    p.circle(bobX, bobY, PARAMS.radius * 2 / 10); // スライダのradiusが大きすぎる場合は見た目調整
 }
 
 // ==========================================
-// 5. UIの追加設定 (カスタムパラメータやモニターを追加する場所)
+// 5. UIの追加設定 (カスタムパラメータを追加する場所)
 // ==========================================
 function setupUI(pane, monitorFolder) {
-    // 例: ここに独自の変数をTweakpaneに追加するコードを書きます
-    // pane.addBinding(window, 'myVariable', { min: 0, max: 100 });
+    // スライダーの追加 (STATE内の変数を紐付け)
+    pane.addBinding(STATE, 'omega_base', { min: 0, max: 10, label: '基準角速度' });
+    pane.addBinding(STATE, 'radius', { min: 0.1, max: 10, label: '振り子の長さ' });
+    pane.addBinding(STATE, 'theta_zero', { min: -Math.PI, max: Math.PI, label: '初期角度(θ0)' }).on('change', () => {
+        // 初期角度のスライダーをいじったら、実際のthetaにも適用する
+        theta = STATE.theta_zero;
+    });
+
+    // リアルタイム変数の監視
+    // getterを使って計算中の変数を読み取らせる
+    monitorFolder.addBinding({ get theta() { return theta; } }, 'theta', { readonly: true, label: '現在角度(θ)' });
+    monitorFolder.addBinding({ get omega() { return omega; } }, 'omega', { readonly: true, label: '現在角速度(ω)' });
 }
 
 
