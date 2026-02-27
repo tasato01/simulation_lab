@@ -15,6 +15,7 @@ const isThumb = new URLSearchParams(window.location.search).get('thumb') === '1'
 
 const PARAMS = {
     theme: currentTheme, // 'light' or 'dark'
+    radius: 10,
     gravity: GRAVITY,
     color: '#ff0055'
 };
