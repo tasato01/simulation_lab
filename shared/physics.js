@@ -42,3 +42,21 @@ export function calculateDrag(velocity) {
   // 進行方向と逆向きに抵抗力をかけるため Math.sign を使用
   return -Math.sign(velocity) * DRAG_COEFFICIENT * velocity * velocity;
 }
+
+/**
+ * 弧度法 (Radians) を度数法 (Degrees) に変換します。
+ * @param {number} rad - 弧度(ラジアン)
+ * @returns {number} 角度(度)
+ */
+export function toDegrees(rad) {
+  return rad * 180 / Math.PI;
+}
+
+/**
+ * 度数法 (Degrees) を弧度法 (Radians) に変換します。
+ * @param {number} deg - 角度(度)
+ * @returns {number} 弧度(ラジアン)
+ */
+export function toRadians(deg) {
+  return deg * Math.PI / 180;
+}

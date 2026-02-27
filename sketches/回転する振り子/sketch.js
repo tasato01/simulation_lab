@@ -1,6 +1,6 @@
 import p5 from 'p5';
 import { Pane } from 'tweakpane';
-import { GRAVITY } from '../../shared/physics.js';
+import { GRAVITY, toDegrees } from '../../shared/physics.js';
 // カメラクラスと共通ユーティリティを読み込む
 import { Camera, drawGrid, drawLine, drawSpring } from '../../shared/view.js';
 
@@ -37,6 +37,7 @@ let omega = 0;
 let theta = 0;
 let acc = 0; // 加速度 (Monitor表示用)
 let theta_base = 0.0; // リングの角度
+let theta_center = 0.0; // 平衡点の角度
 
 // ==========================================
 // 2. 初期化処理 (画面サイズや初期設定などを記述する場所)
@@ -107,7 +108,7 @@ function drawSimulation(p) {
     p.circle(0, -radius * 3, 0.05);
 
     if (Math.abs(cosVal) <= 1) {
-        const theta_center = Math.acos(cosVal);
+        theta_center = Math.acos(cosVal);
         p.fill('#1ab61aff'); // 平衡点は緑色に
         p.circle(radius * Math.cos(theta_center - Math.PI / 2), radius * Math.sin(theta_center - Math.PI / 2), 0.05);
         p.circle(radius * Math.cos(-theta_center - Math.PI / 2), radius * Math.sin(-theta_center - Math.PI / 2), 0.05);
@@ -142,9 +143,10 @@ function setupUI(pane, monitorFolder) {
 
     // リアルタイム変数の監視
     // getterを使って計算中の変数を読み取らせる
-    monitorFolder.addBinding({ get theta() { return Number(theta.toFixed(3)); } }, 'theta', { readonly: true, label: '現在角度(θ)', interval: 60 });
-    monitorFolder.addBinding({ get omega() { return Number(omega.toFixed(3)); } }, 'omega', { readonly: true, label: '現在角速度(ω)', interval: 60 });
-    monitorFolder.addBinding({ get acc() { return Number(acc.toFixed(3)); } }, 'acc', { readonly: true, label: '現在角加速度(α)', interval: 60 });
+    monitorFolder.addBinding({ get acc() { return Number(acc.toFixed(3)); } }, 'acc', { readonly: true, label: '角加速度(α)', interval: 60 });
+    monitorFolder.addBinding({ get omega() { return Number(omega.toFixed(3)); } }, 'omega', { readonly: true, label: '角速度(ω)', interval: 60 });
+    monitorFolder.addBinding({ get theta() { return Number(toDegrees(theta).toFixed(1)); } }, 'theta', { readonly: true, label: '角度(θ) [deg]', interval: 60 });
+    monitorFolder.addBinding({ get theta_center() { return Number(toDegrees(theta_center).toFixed(1)); } }, 'theta_center', { readonly: true, label: '平衡点(θe) [deg]', interval: 60 });
 }
 
 
