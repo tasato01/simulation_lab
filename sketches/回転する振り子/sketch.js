@@ -1,6 +1,6 @@
 import p5 from 'p5';
 import { Pane } from 'tweakpane';
-import { GRAVITY, toDegrees } from '../../shared/physics.js';
+import { GRAVITY, toDegrees, toRadians } from '../../shared/physics.js';
 // カメラクラスと共通ユーティリティを読み込む
 import { Camera, drawGrid, drawLine, drawSpring } from '../../shared/view.js';
 
@@ -29,7 +29,7 @@ const PARAMS = {
 let STATE = {
     omega_base: 2, // リングの角速度
     radius: 1.0,     // 振り子の長さ
-    theta_zero: Math.PI / 6 // 初期の振り角度
+    theta_zero: 30 // ★ 初期の振り角度 [度数法]
 };
 
 // 内部計算用の変数
@@ -44,7 +44,7 @@ let theta_center = 0.0; // 平衡点の角度
 // ==========================================
 function setupSimulation(p) {
     // 画面初期化時やリセット時に呼ばれます
-    theta = STATE.theta_zero;
+    theta = toRadians(STATE.theta_zero);
     omega = 0;
     acc = 0;
     theta_base = 0.0;
@@ -101,24 +101,24 @@ function drawSimulation(p) {
 
     p.noStroke();
     p.fill('#234fe0ff');
-    p.circle(0, -radius, 0.05);
-    p.circle(radius * 3, -radius, 0.05);
-    p.circle(-radius * 3, -radius, 0.05);
-    p.circle(-radius * 3, -radius * 3, 0.05);
-    p.circle(0, -radius * 3, 0.05);
+    p.circle(0, -radius, 0.08);
+    p.circle(radius * 3, -radius, 0.08);
+    p.circle(-radius * 3, -radius, 0.08);
+    p.circle(-radius * 3, -radius * 3, 0.08);
+    p.circle(0, -radius * 3, 0.08);
 
     if (Math.abs(cosVal) <= 1) {
         theta_center = Math.acos(cosVal);
         p.fill('#1ab61aff'); // 平衡点は緑色に
-        p.circle(radius * Math.cos(theta_center - Math.PI / 2), radius * Math.sin(theta_center - Math.PI / 2), 0.05);
-        p.circle(radius * Math.cos(-theta_center - Math.PI / 2), radius * Math.sin(-theta_center - Math.PI / 2), 0.05);
-        p.circle(radius * Math.cos(theta_center - Math.PI / 2) * Math.cos(theta_base) - radius * 3, radius * Math.sin(theta_center - Math.PI / 2), 0.05);
-        p.circle(radius * Math.cos(-theta_center - Math.PI / 2) * Math.cos(theta_base) - radius * 3, radius * Math.sin(-theta_center - Math.PI / 2), 0.05);
-        p.circle(radius * 3, radius * Math.sin(theta_center - Math.PI / 2), 0.05);
-        p.circle(radius * Math.cos(theta_center - Math.PI / 2), -radius * 3, 0.05);
-        p.circle(radius * Math.cos(theta_center + Math.PI / 2), -radius * 3, 0.05);
-        p.circle(base0.x * Math.cos(theta_center - Math.PI / 2) - radius * 3, base0.y * Math.cos(theta_center - Math.PI / 2) - radius * 3, 0.05);
-        p.circle(base0.x * Math.cos(theta_center + Math.PI / 2) - radius * 3, base0.y * Math.cos(theta_center + Math.PI / 2) - radius * 3, 0.05);
+        p.circle(radius * Math.cos(theta_center - Math.PI / 2), radius * Math.sin(theta_center - Math.PI / 2), 0.08);
+        p.circle(radius * Math.cos(-theta_center - Math.PI / 2), radius * Math.sin(-theta_center - Math.PI / 2), 0.08);
+        p.circle(radius * Math.cos(theta_center - Math.PI / 2) * Math.cos(theta_base) - radius * 3, radius * Math.sin(theta_center - Math.PI / 2), 0.08);
+        p.circle(radius * Math.cos(-theta_center - Math.PI / 2) * Math.cos(theta_base) - radius * 3, radius * Math.sin(-theta_center - Math.PI / 2), 0.08);
+        p.circle(radius * 3, radius * Math.sin(theta_center - Math.PI / 2), 0.08);
+        p.circle(radius * Math.cos(theta_center - Math.PI / 2), -radius * 3, 0.08);
+        p.circle(radius * Math.cos(theta_center + Math.PI / 2), -radius * 3, 0.08);
+        p.circle(base0.x * Math.cos(theta_center - Math.PI / 2) - radius * 3, base0.y * Math.cos(theta_center - Math.PI / 2) - radius * 3, 0.08);
+        p.circle(base0.x * Math.cos(theta_center + Math.PI / 2) - radius * 3, base0.y * Math.cos(theta_center + Math.PI / 2) - radius * 3, 0.08);
     }
 
     // オブジェクト(重り)を描画
@@ -139,7 +139,7 @@ function setupUI(pane, monitorFolder) {
     // スライダーの追加 (STATE内の変数を紐付け)
     pane.addBinding(STATE, 'omega_base', { min: 0, max: 10, label: 'リングの角速度' });
     pane.addBinding(STATE, 'radius', { min: 0.1, max: 10, label: '振り子の長さ' });
-    pane.addBinding(STATE, 'theta_zero', { min: 0, max: Math.PI, label: '初期角度(θ0)' });
+    pane.addBinding(STATE, 'theta_zero', { min: 0, max: 180, label: '初期角度(θ0) [deg]' });
 
     // リアルタイム変数の監視
     // getterを使って計算中の変数を読み取らせる
