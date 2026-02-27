@@ -26,9 +26,9 @@ const PARAMS = {
 // 例: 回転する振り子の変数
 // ユーザーがUIからいじれるようにするため、windowオブジェクトなどのプロパティにします
 // (単純なlet宣言だとtweakpaneから参照しにくいため、専用のオブジェクトで包むのがおすすめです)
-const STATE = {
+let STATE = {
     omega_base: 2.0, // 基準の角速度
-    radius: 3.0,     // 振り子の長さ
+    radius: 1.0,     // 振り子の長さ
     theta_zero: Math.PI / 6 // 初期の振り角度
 };
 
@@ -67,19 +67,28 @@ function drawSimulation(p) {
     const isDark = PARAMS.theme === 'dark';
     const springColor = isDark ? '#aaaaaa' : '#888888';
 
+    // 変数を取り出す
+    const { radius } = STATE;
+
     // 角度から x, y 座標を計算 (原点0, 0からの距離 radius)
     // 数学的に下向きを0度とするなら sin, cos を調整します（ここはY上向き座標系です）
     // - Math.PI / 2 を引くことで、theta=0の時に真下(Yのマイナス方向)に向くようにします。
-    const bobX = STATE.radius * Math.cos(theta - Math.PI / 2);
-    const bobY = STATE.radius * Math.sin(theta - Math.PI / 2);
+    const bobX = radius * Math.cos(theta - Math.PI / 2);
+    const bobY = radius * Math.sin(theta - Math.PI / 2);
 
     // 原点から振り子の重り(bob)までの線を描画
-    drawLine(p, 0, 0, bobX, bobY, springColor, 2);
+    drawLine(p, 0, 0, bobX, bobY, springColor, 0.05);
+
+    p.noFill();
+    p.stroke(springColor);
+    p.strokeWeight(0.02);
+    p.circle(0, 0, radius * 2);
 
     // オブジェクト(重り)を描画。半径(radius)は描画用の大きさに調整して使います
     p.fill(PARAMS.color);
     p.noStroke();
-    p.circle(bobX, bobY, PARAMS.radius * 2 / 10); // スライダのradiusが大きすぎる場合は見た目調整
+    p.circle(bobX, bobY, 0.2);
+
 }
 
 // ==========================================
@@ -89,15 +98,13 @@ function setupUI(pane, monitorFolder) {
     // スライダーの追加 (STATE内の変数を紐付け)
     pane.addBinding(STATE, 'omega_base', { min: 0, max: 10, label: '基準角速度' });
     pane.addBinding(STATE, 'radius', { min: 0.1, max: 10, label: '振り子の長さ' });
-    pane.addBinding(STATE, 'theta_zero', { min: -Math.PI, max: Math.PI, label: '初期角度(θ0)' }).on('change', () => {
-        // 初期角度のスライダーをいじったら、実際のthetaにも適用する
-        theta = STATE.theta_zero;
-    });
+    pane.addBinding(STATE, 'theta_zero', { min: -Math.PI, max: Math.PI, label: '初期角度(θ0)' });
 
     // リアルタイム変数の監視
     // getterを使って計算中の変数を読み取らせる
-    monitorFolder.addBinding({ get theta() { return theta; } }, 'theta', { readonly: true, label: '現在角度(θ)' });
-    monitorFolder.addBinding({ get omega() { return omega; } }, 'omega', { readonly: true, label: '現在角速度(ω)' });
+    // 小数点以下の桁数が変わってカクカクするのを防ぐため toFixed で桁を揃えます
+    monitorFolder.addBinding({ get theta() { return Number(theta.toFixed(3)); } }, 'theta', { readonly: true, label: '現在角度(θ)' });
+    monitorFolder.addBinding({ get omega() { return Number(omega.toFixed(3)); } }, 'omega', { readonly: true, label: '現在角速度(ω)' });
 }
 
 
@@ -111,6 +118,7 @@ const sketch = (p) => {
     let pane;
     let camera; // カメラインスタンス
     let isPaused = true; // ★ 初期状態はシミュレーションを一時停止
+    let playPauseBtn; // ボタンの参照を保持
 
     // リアルタイム表示用の監視オブジェクト 
     const MONITOR = {
@@ -121,7 +129,7 @@ const sketch = (p) => {
         p.createCanvas(p.windowWidth, p.windowHeight);
 
         // 初期表示範囲を6としてカメラを生成
-        camera = new Camera(p, 6);
+        camera = new Camera(p, 3);
 
         // ユーザーの初期化処理を呼ぶ
         setupSimulation(p);
@@ -140,7 +148,7 @@ const sketch = (p) => {
 
             // --- 再生 / 一時停止 ---
             // 初期状態が true なので、ボタンラベルもそれに合わせる
-            const playPauseBtn = pane.addButton({ title: '▶ 再生 (Play)' });
+            playPauseBtn = pane.addButton({ title: '▶ 再生 (Play)' });
             playPauseBtn.on('click', () => {
                 isPaused = !isPaused;
                 playPauseBtn.title = isPaused ? '▶ 再生 (Play)' : '⏸ 一時停止 (Pause)';
@@ -152,13 +160,14 @@ const sketch = (p) => {
 
                 // ★ リセット時も一時停止状態に戻す
                 isPaused = true;
-                playPauseBtn.title = '▶ 再生 (Play)';
+                if (playPauseBtn) playPauseBtn.title = '▶ 再生 (Play)';
             });
 
             // --- リアルタイムモニター ---
             const monitorFolder = pane.addFolder({ title: '📊 リアルタイム変数', expanded: true });
-            // interval: 16 にすることで、約60FPSで滑らかに数値が更新されます
-            monitorFolder.addBinding(MONITOR, 'time', { readonly: true, label: '時間(t)', interval: 16 });
+            // interval: 50 にすることで、カクつきを抑えて数値の動きを読みやすくします
+            monitorFolder.addBinding({ get time() { return Number(MONITOR.time.toFixed(3)); } }, 'time', { readonly: true, label: '時間(t)', interval: 50 });
+
 
             // ★ カスタムUI関数を呼び出し
             if (typeof setupUI === 'function') {
@@ -237,6 +246,22 @@ const sketch = (p) => {
         // サムネイル時は1フレームだけ描画してループを停止することで負荷を軽減
         if (isThumb) {
             p.noLoop();
+        }
+    };
+
+    // キーボード操作のフック
+    p.keyPressed = () => {
+        if (p.key === ' ') {
+            // スペースキーで再生/一時停止
+            isPaused = !isPaused;
+            if (playPauseBtn) playPauseBtn.title = isPaused ? '▶ 再生 (Play)' : '⏸ 一時停止 (Pause)';
+        }
+        if (p.key === 'r' || p.key === 'R') {
+            // Rキーでリセット
+            MONITOR.time = 0;
+            setupSimulation(p);
+            isPaused = true;
+            if (playPauseBtn) playPauseBtn.title = '▶ 再生 (Play)';
         }
     };
 

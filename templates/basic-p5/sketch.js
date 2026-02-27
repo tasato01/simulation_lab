@@ -84,6 +84,7 @@ const sketch = (p) => {
     let pane;
     let camera; // カメラインスタンス
     let isPaused = true; // ★ 初期状態はシミュレーションを一時停止
+    let playPauseBtn; // ボタンの参照を保持
 
     // リアルタイム表示用の監視オブジェクト 
     const MONITOR = {
@@ -113,7 +114,7 @@ const sketch = (p) => {
 
             // --- 再生 / 一時停止 ---
             // 初期状態が true なので、ボタンラベルもそれに合わせる
-            const playPauseBtn = pane.addButton({ title: '▶ 再生 (Play)' });
+            playPauseBtn = pane.addButton({ title: '▶ 再生 (Play)' });
             playPauseBtn.on('click', () => {
                 isPaused = !isPaused;
                 playPauseBtn.title = isPaused ? '▶ 再生 (Play)' : '⏸ 一時停止 (Pause)';
@@ -125,13 +126,13 @@ const sketch = (p) => {
 
                 // ★ リセット時も一時停止状態に戻す
                 isPaused = true;
-                playPauseBtn.title = '▶ 再生 (Play)';
+                if (playPauseBtn) playPauseBtn.title = '▶ 再生 (Play)';
             });
 
             // --- リアルタイムモニター ---
             const monitorFolder = pane.addFolder({ title: '📊 リアルタイム変数', expanded: true });
-            // interval: 16 にすることで、約60FPSで滑らかに数値が更新されます
-            monitorFolder.addBinding(MONITOR, 'time', { readonly: true, label: '時間(t)', interval: 16 });
+            // interval: 50 にすることで、カクつきを抑えて数値の動きを読みやすくします
+            monitorFolder.addBinding({ get time() { return Number(MONITOR.time.toFixed(3)); } }, 'time', { readonly: true, label: '時間(t)', interval: 50 });
 
             // ★ カスタムUI関数を呼び出し
             if (typeof setupUI === 'function') {
@@ -210,6 +211,22 @@ const sketch = (p) => {
         // サムネイル時は1フレームだけ描画してループを停止することで負荷を軽減
         if (isThumb) {
             p.noLoop();
+        }
+    };
+
+    // キーボード操作のフック
+    p.keyPressed = () => {
+        if (p.key === ' ') {
+            // スペースキーで再生/一時停止
+            isPaused = !isPaused;
+            if (playPauseBtn) playPauseBtn.title = isPaused ? '▶ 再生 (Play)' : '⏸ 一時停止 (Pause)';
+        }
+        if (p.key === 'r' || p.key === 'R') {
+            // Rキーでリセット
+            MONITOR.time = 0;
+            setupSimulation(p);
+            isPaused = true;
+            if (playPauseBtn) playPauseBtn.title = '▶ 再生 (Play)';
         }
     };
 

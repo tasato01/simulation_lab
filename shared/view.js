@@ -255,7 +255,7 @@ export function drawLine(p, x1, y1, x2, y2, color = '#000000', weight = 2) {
  * @param {string} color - ばねの色 (例: '#888888')
  * @param {number} weight - ばねの線の太さ (デフォルト: 2)
  */
-export function drawSpring(p, x1, y1, x2, y2, waves = 10, width = 2, color = '#888888', weight = 2) {
+export function drawSpring(p, x1, y1, x2, y2, waves = 10, width = 2, color = '#888888', weight = 0.1) {
     p.push();
     p.stroke(color);
     p.strokeWeight(weight);
