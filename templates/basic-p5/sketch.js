@@ -107,11 +107,6 @@ const sketch = (p) => {
             // ==========================================
             pane = new Pane({ title: 'パラメータ調整' });
 
-            // --- シミュレーション操作 ---
-            pane.addBinding(PARAMS, 'radius', { min: 1, max: 50, label: '描画半径' });
-            pane.addBinding(PARAMS, 'gravity', { min: 0, max: 20, label: '重力' });
-            pane.addBinding(PARAMS, 'color', { label: '色' });
-
             // --- 再生 / 一時停止 ---
             // 初期状態が true なので、ボタンラベルもそれに合わせる
             playPauseBtn = pane.addButton({ title: '▶ 再生 (Play)' });
@@ -153,9 +148,11 @@ const sketch = (p) => {
                 if (ev.value === 'dark') {
                     document.body.style.backgroundColor = '#1a1a1a';
                     document.body.style.color = 'white';
+                    document.body.classList.add('theme-dark');
                 } else {
                     document.body.style.backgroundColor = '#f7f9fc';
                     document.body.style.color = '#333';
+                    document.body.classList.remove('theme-dark');
                 }
             });
 
@@ -163,6 +160,7 @@ const sketch = (p) => {
             if (PARAMS.theme === 'dark') {
                 document.body.style.backgroundColor = '#1a1a1a';
                 document.body.style.color = 'white';
+                document.body.classList.add('theme-dark');
             }
 
             // --- 共有用コピーボタン ---

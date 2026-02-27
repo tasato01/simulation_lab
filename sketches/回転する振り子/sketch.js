@@ -74,11 +74,10 @@ function drawSimulation(p) {
     const { gravity } = PARAMS;
 
     // 角度から x, y 座標を計算 (原点0, 0からの距離 radius)
-    // - Math.PI / 2 を引くことで、theta=0の時に真下(Yのマイナス方向)に向くように合わせる
     const bob1 = { x: radius * Math.cos(theta - Math.PI / 2), y: radius * Math.sin(theta - Math.PI / 2) }
     const base0 = { x: radius * Math.cos(theta_base), y: radius * Math.sin(theta_base) }
     const base1 = { x: radius * Math.cos(theta_base + Math.PI), y: radius * Math.sin(theta_base + Math.PI) }
-    const bob2 = { x: base0.x * Math.cos(theta - Math.PI / 2), y: base0.y * Math.cos(theta - Math.PI / 2) + radius * 3 }
+    const bob2 = { x: base0.x * Math.cos(theta - Math.PI / 2) - radius * 3, y: base0.y * Math.cos(theta - Math.PI / 2) - radius * 3 }
     const bob3 = { x: radius * 3, y: radius * Math.sin(theta - Math.PI / 2) }
     const bob4 = { x: radius * Math.cos(theta - Math.PI / 2), y: -radius * 3 }
     const bob5 = { x: bob1.x * Math.cos(theta_base) - radius * 3, y: bob1.y }
@@ -87,7 +86,7 @@ function drawSimulation(p) {
     const cosVal = gravity / (radius * omega_base ** 2);
 
     drawLine(p, 0, 0, bob1.x, bob1.y, springColor, 0.02);
-    drawLine(p, base0.x, base0.y + radius * 3, base1.x, base1.y + radius * 3, springColor, 0.02);
+    drawLine(p, base0.x - radius * 3, base0.y - radius * 3, base1.x - radius * 3, base1.y - radius * 3, springColor, 0.02);
     drawLine(p, radius * 3, -radius, radius * 3, radius, springColor, 0.02);
     drawLine(p, -radius, -radius * 3, radius, -radius * 3, springColor, 0.02);
 
@@ -96,6 +95,28 @@ function drawSimulation(p) {
     p.strokeWeight(0.02);
     p.circle(0, 0, radius * 2);
     p.ellipse(-radius * 3, 0, radius * 2 * Math.cos(theta_base), radius * 2);
+
+    p.noStroke();
+    p.fill('#234fe0ff');
+    p.circle(0, -radius, 0.05);
+    p.circle(radius * 3, -radius, 0.05);
+    p.circle(-radius * 3, -radius, 0.05);
+    p.circle(-radius * 3, -radius * 3, 0.05);
+    p.circle(0, -radius * 3, 0.05);
+
+    if (Math.abs(cosVal) <= 1) {
+        const theta_center = Math.acos(cosVal);
+        p.fill('#1ab61aff'); // 平衡点は緑色に
+        p.circle(radius * Math.cos(theta_center - Math.PI / 2), radius * Math.sin(theta_center - Math.PI / 2), 0.05);
+        p.circle(radius * Math.cos(-theta_center - Math.PI / 2), radius * Math.sin(-theta_center - Math.PI / 2), 0.05);
+        p.circle(radius * Math.cos(theta_center - Math.PI / 2) * Math.cos(theta_base) - radius * 3, radius * Math.sin(theta_center - Math.PI / 2), 0.05);
+        p.circle(radius * Math.cos(-theta_center - Math.PI / 2) * Math.cos(theta_base) - radius * 3, radius * Math.sin(-theta_center - Math.PI / 2), 0.05);
+        p.circle(radius * 3, radius * Math.sin(theta_center - Math.PI / 2), 0.05);
+        p.circle(radius * Math.cos(theta_center - Math.PI / 2), -radius * 3, 0.05);
+        p.circle(radius * Math.cos(theta_center + Math.PI / 2), -radius * 3, 0.05);
+        p.circle(base0.x * Math.cos(theta_center - Math.PI / 2) - radius * 3, base0.y * Math.cos(theta_center - Math.PI / 2) - radius * 3, 0.05);
+        p.circle(base0.x * Math.cos(theta_center + Math.PI / 2) - radius * 3, base0.y * Math.cos(theta_center + Math.PI / 2) - radius * 3, 0.05);
+    }
 
     // オブジェクト(重り)を描画
     p.fill(PARAMS.color);
@@ -106,14 +127,6 @@ function drawSimulation(p) {
     p.circle(bob4.x, bob4.y, 0.2);
     p.circle(bob5.x, bob5.y, 0.2);
 
-    // 平衡点が存在する場合のみ描画
-    if (Math.abs(cosVal) <= 1) {
-        const theta_center = Math.acos(cosVal);
-        p.fill('#44ff44'); // 平衡点は緑色に
-        p.circle(radius * Math.cos(theta_center - Math.PI / 2), radius * Math.sin(theta_center - Math.PI / 2), 0.1);
-        // 反対側も
-        p.circle(radius * Math.cos(-theta_center - Math.PI / 2), radius * Math.sin(-theta_center - Math.PI / 2), 0.1);
-    }
 }
 
 // ==========================================
@@ -128,8 +141,8 @@ function setupUI(pane, monitorFolder) {
     // リアルタイム変数の監視
     // getterを使って計算中の変数を読み取らせる
     // 小数点以下の桁数が変わってカクカクするのを防ぐため toFixed で桁を揃えます
-    monitorFolder.addBinding({ get theta() { return Number(theta.toFixed(3)); } }, 'theta', { readonly: true, label: '現在角度(θ)' });
-    monitorFolder.addBinding({ get omega() { return Number(omega.toFixed(3)); } }, 'omega', { readonly: true, label: '現在角速度(ω)' });
+    monitorFolder.addBinding({ get theta() { return Number(theta.toFixed(3)); } }, 'theta', { readonly: true, label: '現在角度(θ)', interval: 50 });
+    monitorFolder.addBinding({ get omega() { return Number(omega.toFixed(3)); } }, 'omega', { readonly: true, label: '現在角速度(ω)', interval: 50 });
 }
 
 
@@ -165,11 +178,6 @@ const sketch = (p) => {
             // UI パネルの構築
             // ==========================================
             pane = new Pane({ title: 'パラメータ調整' });
-
-            // --- シミュレーション操作 ---
-            pane.addBinding(PARAMS, 'radius', { min: 1, max: 50, label: '描画半径' });
-            pane.addBinding(PARAMS, 'gravity', { min: 0, max: 20, label: '重力' });
-            pane.addBinding(PARAMS, 'color', { label: '色' });
 
             // --- 再生 / 一時停止 ---
             // 初期状態が true なので、ボタンラベルもそれに合わせる
@@ -213,9 +221,11 @@ const sketch = (p) => {
                 if (ev.value === 'dark') {
                     document.body.style.backgroundColor = '#1a1a1a';
                     document.body.style.color = 'white';
+                    document.body.classList.add('theme-dark');
                 } else {
                     document.body.style.backgroundColor = '#f7f9fc';
                     document.body.style.color = '#333';
+                    document.body.classList.remove('theme-dark');
                 }
             });
 
@@ -223,6 +233,7 @@ const sketch = (p) => {
             if (PARAMS.theme === 'dark') {
                 document.body.style.backgroundColor = '#1a1a1a';
                 document.body.style.color = 'white';
+                document.body.classList.add('theme-dark');
             }
 
             // --- 共有用コピーボタン ---
